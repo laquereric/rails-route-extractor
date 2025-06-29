@@ -1,0 +1,174 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+
+# Simple test runner for RouteExtract gem
+# This script runs basic functionality tests without requiring RSpec
+
+puts "RouteExtract Gem Test Runner"
+puts "=" * 40
+
+# Test 1: Gem loading
+print "Testing gem loading... "
+begin
+  require_relative '../lib/route_extract'
+  puts "✓ PASS"
+rescue => e
+  puts "✗ FAIL: #{e.message}"
+  exit 1
+end
+
+# Test 2: Version constant
+print "Testing version constant... "
+begin
+  version = RouteExtract::VERSION
+  if version && version.match?(/\d+\.\d+\.\d+/)
+    puts "✓ PASS (#{version})"
+  else
+    puts "✗ FAIL: Invalid version format"
+    exit 1
+  end
+rescue => e
+  puts "✗ FAIL: #{e.message}"
+  exit 1
+end
+
+# Test 3: Configuration
+print "Testing configuration... "
+begin
+  RouteExtract.configure do |config|
+    config.verbose = true
+    config.include_gems = false
+  end
+  
+  if RouteExtract.config.verbose == true && RouteExtract.config.include_gems == false
+    puts "✓ PASS"
+  else
+    puts "✗ FAIL: Configuration not applied correctly"
+    exit 1
+  end
+rescue => e
+  puts "✗ FAIL: #{e.message}"
+  exit 1
+end
+
+# Test 4: Class instantiation
+print "Testing class instantiation... "
+begin
+  config = RouteExtract::Configuration.new
+  analyzer = RouteExtract::RouteAnalyzer.new(config)
+  extractor = RouteExtract::CodeExtractor.new(config)
+  manager = RouteExtract::ExtractManager.new(config)
+  
+  puts "✓ PASS"
+rescue => e
+  puts "✗ FAIL: #{e.message}"
+  exit 1
+end
+
+# Test 5: Mode shortcuts
+print "Testing mode shortcuts... "
+begin
+  config = RouteExtract::Configuration.new
+  
+  config.models_only
+  if config.include_models && !config.include_views && !config.include_controllers
+    config.mvc_mode
+    if config.include_models && config.include_views && config.include_controllers
+      puts "✓ PASS"
+    else
+      puts "✗ FAIL: mvc_mode not working"
+      exit 1
+    end
+  else
+    puts "✗ FAIL: models_only not working"
+    exit 1
+  end
+rescue => e
+  puts "✗ FAIL: #{e.message}"
+  exit 1
+end
+
+# Test 6: Error classes
+print "Testing error classes... "
+begin
+  error_classes = [
+    RouteExtract::Error,
+    RouteExtract::ConfigurationError,
+    RouteExtract::ExtractionError,
+    RouteExtract::AnalysisError
+  ]
+  
+  error_classes.each do |error_class|
+    unless error_class < StandardError
+      puts "✗ FAIL: #{error_class} is not a StandardError subclass"
+      exit 1
+    end
+  end
+  
+  puts "✓ PASS"
+rescue => e
+  puts "✗ FAIL: #{e.message}"
+  exit 1
+end
+
+# Test 7: CLI class
+print "Testing CLI class... "
+begin
+  cli = RouteExtract::CLI.new
+  
+  # Test that CLI responds to expected methods
+  expected_methods = [:extract, :extract_multiple, :list, :info, :cleanup, :stats]
+  expected_methods.each do |method|
+    unless cli.respond_to?(method)
+      puts "✗ FAIL: CLI missing method #{method}"
+      exit 1
+    end
+  end
+  
+  puts "✓ PASS"
+rescue => e
+  puts "✗ FAIL: #{e.message}"
+  exit 1
+end
+
+# Test 8: File structure
+print "Testing file structure... "
+begin
+  required_files = [
+    'lib/route_extract.rb',
+    'lib/route_extract/version.rb',
+    'lib/route_extract/configuration.rb',
+    'lib/route_extract/route_analyzer.rb',
+    'lib/route_extract/code_extractor.rb',
+    'lib/route_extract/extract_manager.rb',
+    'lib/route_extract/cli.rb',
+    'exe/route_extract',
+    'route_extract.gemspec',
+    'README.md',
+    'LICENSE.txt'
+  ]
+  
+  missing_files = required_files.reject { |file| File.exist?(file) }
+  
+  if missing_files.empty?
+    puts "✓ PASS"
+  else
+    puts "✗ FAIL: Missing files: #{missing_files.join(', ')}"
+    exit 1
+  end
+rescue => e
+  puts "✗ FAIL: #{e.message}"
+  exit 1
+end
+
+puts "\n" + "=" * 40
+puts "All tests passed! ✓"
+puts "\nThe RouteExtract gem appears to be working correctly."
+puts "You can now:"
+puts "1. Build the gem: gem build route_extract.gemspec"
+puts "2. Install locally: gem install route_extract-*.gem"
+puts "3. Run full test suite: rspec (if RSpec is available)"
+puts "4. Test CLI: ./exe/route_extract help"
+
