@@ -3,7 +3,7 @@
 require 'fileutils'
 require 'find'
 
-module RouteExtract
+module RailsRouteExtractor
   class ExtractManager
     attr_reader :config, :route_analyzer, :code_extractor, :dependency_tracker
 

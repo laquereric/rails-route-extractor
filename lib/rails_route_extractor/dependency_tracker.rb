@@ -3,7 +3,7 @@
 require 'find'
 require 'set'
 
-module RouteExtract
+module RailsRouteExtractor
   class DependencyTracker
     attr_reader :config
 

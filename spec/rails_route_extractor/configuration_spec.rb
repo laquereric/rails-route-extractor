@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
-RSpec.describe RouteExtract::Configuration do
+RSpec.describe RailsRouteExtractor::Configuration do
   let(:config) { described_class.new }
 
   describe "#initialize" do

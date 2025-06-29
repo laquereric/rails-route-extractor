@@ -1,6 +1,6 @@
-# RouteExtract
+# RailsRouteExtractor
 
-RouteExtract is a comprehensive Ruby gem that provides rake tasks for Rails applications to extract Model, View, Controller (MVC) code required for specific routes. Building on the capabilities of `rails_route_tester` and `codeql_db`, it offers intelligent code extraction with dependency tracking and gem source file inclusion.
+RailsRouteExtractor is a comprehensive Ruby gem that provides rake tasks for Rails applications to extract Model, View, Controller (MVC) code required for specific routes. Building on the capabilities of `rails_route_tester` and `codeql_db`, it offers intelligent code extraction with dependency tracking and gem source file inclusion.
 
 ## Features
 
@@ -18,7 +18,7 @@ RouteExtract is a comprehensive Ruby gem that provides rake tasks for Rails appl
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'route_extract'
+gem 'rails_route_extractor'
 ```
 
 And then execute:
@@ -30,7 +30,7 @@ $ bundle install
 Or install it yourself as:
 
 ```bash
-$ gem install route_extract
+$ gem install rails_route_extractor
 ```
 
 ## Usage
@@ -39,75 +39,75 @@ $ gem install route_extract
 
 ```bash
 # Extract MVC code for a specific route
-route_extract extract "users#index"
+rails_route_extractor extract "users#index"
 
 # Extract only models and views
-route_extract extract "users#show" --mode mv
+rails_route_extractor extract "users#show" --mode mv
 
 # Extract multiple routes
-route_extract extract_multiple "users#index,users#show,posts#index"
+rails_route_extractor extract_multiple "users#index,users#show,posts#index"
 
 # List all available routes
-route_extract list
+rails_route_extractor list
 
 # Get detailed route information
-route_extract info "users#index"
+rails_route_extractor info "users#index"
 
 # Clean up old extracts
-route_extract cleanup --older_than 7d
+rails_route_extractor cleanup --older_than 7d
 ```
 
 ### Rake Tasks
 
 ```bash
 # Extract MVC code for a route
-rake route_extract:extract[users#index]
+rake rails_route_extractor:extract[users#index]
 
 # Extract with specific mode
-rake route_extract:extract[users#show,mv]
+rake rails_route_extractor:extract[users#show,mv]
 
 # Extract multiple routes
-rake route_extract:extract_multiple[users#index,users#show]
+rake rails_route_extractor:extract_multiple[users#index,users#show]
 
 # List all routes
-rake route_extract:list
+rake rails_route_extractor:list
 
 # Clean up extracts
-rake route_extract:cleanup
+rake rails_route_extractor:cleanup
 ```
 
 ### Ruby API
 
 ```ruby
-require 'route_extract'
+require 'rails_route_extractor'
 
 # Configure the gem
-RouteExtract.configure do |config|
+RailsRouteExtractor.configure do |config|
   config.extract_base_path = "custom_extracts"
   config.include_gems = true
   config.verbose = true
 end
 
 # Extract a single route
-result = RouteExtract.extract_route("users#index", mode: "mvc")
+result = RailsRouteExtractor.extract_route("users#index", mode: "mvc")
 
 # Extract multiple routes
-results = RouteExtract.extract_routes(["users#index", "posts#show"])
+results = RailsRouteExtractor.extract_routes(["users#index", "posts#show"])
 
 # List available routes
-routes = RouteExtract.list_routes
+routes = RailsRouteExtractor.list_routes
 
 # Get route information
-info = RouteExtract.route_info("users#index")
+info = RailsRouteExtractor.route_info("users#index")
 ```
 
 ## Configuration
 
-RouteExtract can be configured through an initializer in Rails applications:
+RailsRouteExtractor can be configured through an initializer in Rails applications:
 
 ```ruby
-# config/initializers/route_extract.rb
-RouteExtract.configure do |config|
+# config/initializers/rails_route_extractor.rb
+RailsRouteExtractor.configure do |config|
   # Base path for extracts (relative to Rails.root)
   config.extract_base_path = "route_extracts"
   
@@ -139,7 +139,7 @@ end
 
 ## Extraction Modes
 
-RouteExtract supports several extraction modes:
+RailsRouteExtractor supports several extraction modes:
 
 - **`mvc`** (default): Extract Models, Views, and Controllers
 - **`m`**: Extract Models only
@@ -177,7 +177,7 @@ route_extracts/
 
 ## Dependencies
 
-RouteExtract builds upon these excellent gems:
+RailsRouteExtractor builds upon these excellent gems:
 
 - **rails_route_tester**: For route analysis and testing capabilities
 - **codeql_db**: For comprehensive code analysis and dependency tracking

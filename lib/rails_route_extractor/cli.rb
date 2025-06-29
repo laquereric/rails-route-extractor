@@ -2,7 +2,7 @@
 
 require "thor"
 
-module RouteExtract
+module RailsRouteExtractor
   class CLI < Thor
     include Thor::Actions
 

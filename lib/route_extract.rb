@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
-require_relative "route_extract/version"
-require_relative "route_extract/configuration"
-require_relative "route_extract/route_analyzer"
-require_relative "route_extract/code_extractor"
-require_relative "route_extract/dependency_tracker"
-require_relative "route_extract/gem_analyzer"
-require_relative "route_extract/file_analyzer"
-require_relative "route_extract/extract_manager"
-require_relative "route_extract/cli"
+require_relative "rails_route_extractor/version"
+require_relative "rails_route_extractor/configuration"
+require_relative "rails_route_extractor/route_analyzer"
+require_relative "rails_route_extractor/code_extractor"
+require_relative "rails_route_extractor/dependency_tracker"
+require_relative "rails_route_extractor/gem_analyzer"
+require_relative "rails_route_extractor/file_analyzer"
+require_relative "rails_route_extractor/extract_manager"
+require_relative "rails_route_extractor/cli"
 
 # Load Railtie if Rails is available
 if defined?(Rails)
-  require_relative "route_extract/railtie"
+  require_relative "rails_route_extractor/railtie"
 end
 
-module RouteExtract
+module RailsRouteExtractor
   class Error < StandardError; end
 
   class << self

@@ -2,7 +2,7 @@
 
 require 'rails/generators'
 
-module RouteExtract
+module RailsRouteExtractor
   module Generators
     class InstallGenerator < Rails::Generators::Base
       desc "Install RouteExtract in your Rails application"

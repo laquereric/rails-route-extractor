@@ -2,7 +2,7 @@
 
 require 'bundler'
 
-module RouteExtract
+module RailsRouteExtractor
   class GemAnalyzer
     attr_reader :config
 

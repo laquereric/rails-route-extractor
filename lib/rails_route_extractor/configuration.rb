@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module RouteExtract
+module RailsRouteExtractor
   class Configuration
     attr_accessor :extract_base_path,
                   :include_models,

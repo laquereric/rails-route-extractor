@@ -1,23 +1,23 @@
 # frozen_string_literal: true
 
-require_relative "lib/route_extract/version"
+require_relative "lib/rails_route_extractor/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "route_extract"
-  spec.version = RouteExtract::VERSION
-  spec.authors = ["RouteExtract Team"]
-  spec.email = ["team@routeextract.com"]
+  spec.name = "rails_route_extractor"
+  spec.version = RailsRouteExtractor::VERSION
+  spec.authors = ["RailsRouteExtractor Team"]
+  spec.email = ["team@railsrouteextractor.com"]
 
   spec.summary = "Extract Model, View, Controller code for specific Rails routes"
   spec.description = "A Ruby gem that builds on rails_route_tester and codeql_db to provide rake tasks for extracting MVC code required for particular routes, including referenced gem source files."
-  spec.homepage = "https://github.com/laquereric/route_extract"
+  spec.homepage = "https://github.com/laquereric/rails_route_extractor"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/laquereric/route_extract"
-  spec.metadata["changelog_uri"] = "https://github.com/laquereric/route_extract/blob/main/CHANGELOG.md"
+  spec.metadata["source_code_uri"] = "https://github.com/laquereric/rails_route_extractor"
+  spec.metadata["changelog_uri"] = "https://github.com/laquereric/rails_route_extractor/blob/main/CHANGELOG.md"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.

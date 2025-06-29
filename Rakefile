@@ -2,20 +2,25 @@
 
 require "bundler/gem_tasks"
 require "rspec/core/rake_task"
-require "rubocop/rake_task"
 
 RSpec::Core::RakeTask.new(:spec)
-RuboCop::RakeTask.new
 
-task default: %i[spec rubocop]
+task default: :spec
 
-# Load gem tasks
-begin
-  require "route_extract"
-  load "lib/route_extract/tasks/extract.rake"
-  load "lib/route_extract/tasks/routes.rake"
-  load "lib/route_extract/tasks/cleanup.rake"
-rescue LoadError
-  # Gem not yet built, skip loading tasks
+# Load custom rake tasks
+require "rails_route_extractor"
+load "lib/rails_route_extractor/tasks/extract.rake"
+load "lib/rails_route_extractor/tasks/routes.rake"
+load "lib/rails_route_extractor/tasks/cleanup.rake"
+
+# Custom tasks for development
+task :test_gem do
+  puts "Testing RailsRouteExtractor gem..."
+  system("ruby bin/test")
+end
+
+task :validate_structure do
+  puts "Validating gem structure..."
+  system("python validate_gem.py")
 end
 

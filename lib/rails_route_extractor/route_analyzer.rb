@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module RouteExtract
+module RailsRouteExtractor
   class RouteAnalyzer
     attr_reader :config
 

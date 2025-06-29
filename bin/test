@@ -3,16 +3,16 @@
 
 require 'bundler/setup'
 
-# Simple test runner for RouteExtract gem
+# Simple test runner for RailsRouteExtractor gem
 # This script runs basic functionality tests without requiring RSpec
 
-puts "RouteExtract Gem Test Runner"
+puts "RailsRouteExtractor Gem Test Runner"
 puts "=" * 40
 
 # Test 1: Gem loading
 print "Testing gem loading... "
 begin
-  require_relative '../lib/route_extract'
+  require_relative '../lib/rails_route_extractor'
   puts "✓ PASS"
 rescue => e
   puts "✗ FAIL: #{e.message}"
@@ -22,7 +22,7 @@ end
 # Test 2: Version constant
 print "Testing version constant... "
 begin
-  version = RouteExtract::VERSION
+  version = RailsRouteExtractor::VERSION
   if version && version.match?(/\d+\.\d+\.\d+/)
     puts "✓ PASS (#{version})"
   else
@@ -37,12 +37,12 @@ end
 # Test 3: Configuration
 print "Testing configuration... "
 begin
-  RouteExtract.configure do |config|
+  RailsRouteExtractor.configure do |config|
     config.verbose = true
     config.include_gems = false
   end
   
-  if RouteExtract.config.verbose == true && RouteExtract.config.include_gems == false
+  if RailsRouteExtractor.config.verbose == true && RailsRouteExtractor.config.include_gems == false
     puts "✓ PASS"
   else
     puts "✗ FAIL: Configuration not applied correctly"
@@ -56,10 +56,10 @@ end
 # Test 4: Class instantiation
 print "Testing class instantiation... "
 begin
-  config = RouteExtract::Configuration.new
-  analyzer = RouteExtract::RouteAnalyzer.new(config)
-  extractor = RouteExtract::CodeExtractor.new(config)
-  manager = RouteExtract::ExtractManager.new(config)
+  config = RailsRouteExtractor::Configuration.new
+  analyzer = RailsRouteExtractor::RouteAnalyzer.new(config)
+  extractor = RailsRouteExtractor::CodeExtractor.new(config)
+  manager = RailsRouteExtractor::ExtractManager.new(config)
   
   puts "✓ PASS"
 rescue => e
@@ -70,7 +70,7 @@ end
 # Test 5: Mode shortcuts
 print "Testing mode shortcuts... "
 begin
-  config = RouteExtract::Configuration.new
+  config = RailsRouteExtractor::Configuration.new
   
   config.models_only
   if config.include_models && !config.include_views && !config.include_controllers
@@ -94,10 +94,10 @@ end
 print "Testing error classes... "
 begin
   error_classes = [
-    RouteExtract::Error,
-    RouteExtract::ConfigurationError,
-    RouteExtract::ExtractionError,
-    RouteExtract::AnalysisError
+    RailsRouteExtractor::Error,
+    RailsRouteExtractor::ConfigurationError,
+    RailsRouteExtractor::ExtractionError,
+    RailsRouteExtractor::AnalysisError
   ]
   
   error_classes.each do |error_class|
@@ -116,7 +116,7 @@ end
 # Test 7: CLI class
 print "Testing CLI class... "
 begin
-  cli = RouteExtract::CLI.new
+  cli = RailsRouteExtractor::CLI.new
   
   # Test that CLI responds to expected methods
   expected_methods = [:extract, :extract_multiple, :list, :info, :cleanup, :stats]
@@ -137,15 +137,15 @@ end
 print "Testing file structure... "
 begin
   required_files = [
-    'lib/route_extract.rb',
-    'lib/route_extract/version.rb',
-    'lib/route_extract/configuration.rb',
-    'lib/route_extract/route_analyzer.rb',
-    'lib/route_extract/code_extractor.rb',
-    'lib/route_extract/extract_manager.rb',
-    'lib/route_extract/cli.rb',
-    'exe/route_extract',
-    'route_extract.gemspec',
+    'lib/rails_route_extractor.rb',
+    'lib/rails_route_extractor/version.rb',
+    'lib/rails_route_extractor/configuration.rb',
+    'lib/rails_route_extractor/route_analyzer.rb',
+    'lib/rails_route_extractor/code_extractor.rb',
+    'lib/rails_route_extractor/extract_manager.rb',
+    'lib/rails_route_extractor/cli.rb',
+    'exe/rails_route_extractor',
+    'rails-route-extractor.gemspec',
     'README.md',
     'LICENSE.txt'
   ]
@@ -165,10 +165,10 @@ end
 
 puts "\n" + "=" * 40
 puts "All tests passed! ✓"
-puts "\nThe RouteExtract gem appears to be working correctly."
+puts "\nThe RailsRouteExtractor gem appears to be working correctly."
 puts "You can now:"
-puts "1. Build the gem: gem build route_extract.gemspec"
-puts "2. Install locally: gem install route_extract-*.gem"
+puts "1. Build the gem: gem build rails-route-extractor.gemspec"
+puts "2. Install locally: gem install rails-route-extractor-*.gem"
 puts "3. Run full test suite: rspec (if RSpec is available)"
-puts "4. Test CLI: ./exe/route_extract help"
+puts "4. Test CLI: ./exe/rails_route_extractor help"
 

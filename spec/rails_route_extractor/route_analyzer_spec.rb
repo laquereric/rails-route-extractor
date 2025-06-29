@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
+require "spec_helper"
 
-RSpec.describe RouteExtract::RouteAnalyzer do
-  let(:config) { RouteExtract::Configuration.new }
+RSpec.describe RailsRouteExtractor::RouteAnalyzer do
+  let(:config) { RailsRouteExtractor::Configuration.new }
   let(:analyzer) { described_class.new(config) }
 
   describe "#initialize" do
@@ -149,7 +149,7 @@ RSpec.describe RouteExtract::RouteAnalyzer do
       
       # Mock dependency tracker
       dependency_tracker = double("dependency_tracker")
-      allow(RouteExtract::DependencyTracker).to receive(:new).and_return(dependency_tracker)
+      allow(RailsRouteExtractor::DependencyTracker).to receive(:new).and_return(dependency_tracker)
       allow(dependency_tracker).to receive(:track_dependencies).and_return({
         gems: ["devise", "kaminari"],
         requires: ["user", "profile"],
@@ -182,7 +182,7 @@ RSpec.describe RouteExtract::RouteAnalyzer do
       
       # Mock file analyzer
       file_analyzer = double("file_analyzer")
-      allow(RouteExtract::FileAnalyzer).to receive(:new).and_return(file_analyzer)
+      allow(RailsRouteExtractor::FileAnalyzer).to receive(:new).and_return(file_analyzer)
       allow(file_analyzer).to receive(:analyze_files).and_return({
         summary: {
           total_files: 5,

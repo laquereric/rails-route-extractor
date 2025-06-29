@@ -3,7 +3,7 @@
 require 'fileutils'
 require 'json'
 
-module RouteExtract
+module RailsRouteExtractor
   class CodeExtractor
     attr_reader :config, :route_analyzer
 

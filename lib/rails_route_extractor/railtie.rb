@@ -2,7 +2,7 @@
 
 require "rails/railtie"
 
-module RouteExtract
+module RailsRouteExtractor
   class Railtie < Rails::Railtie
     railtie_name :route_extract
 
