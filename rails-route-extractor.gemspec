@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = "rails_route_extractor"
   spec.version = RailsRouteExtractor::VERSION
   spec.authors = ["RailsRouteExtractor Team"]
-  spec.email = ["team@railsrouteextractor.com"]
+  spec.email = ["laquereric@gmail.com"]
 
   spec.summary = "Extract Model, View, Controller code for specific Rails routes"
   spec.description = "A Ruby gem that builds on rails_route_tester and codeql_db to provide rake tasks for extracting MVC code required for particular routes, including referenced gem source files."
