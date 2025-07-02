@@ -152,6 +152,224 @@ rake rails_route_extractor:list:html[,,true]
 rake rails_route_extractor:list:csv > routes.csv
 ```
 
+#### JSON Output Examples
+
+The JSON format provides structured data that's perfect for programmatic access and integration with other tools.
+
+**Basic JSON Output:**
+```bash
+rake rails_route_extractor:list:json
+```
+
+```json
+[
+  {
+    "pattern": "users",
+    "controller": "users",
+    "action": "index",
+    "method": "GET",
+    "name": "users",
+    "helper": "users_path",
+    "path": "/users(.:format)",
+    "requirements": {
+      "controller": "users",
+      "action": "index"
+    },
+    "constraints": {}
+  },
+  {
+    "pattern": "users/new",
+    "controller": "users",
+    "action": "new",
+    "method": "GET",
+    "name": "new_user",
+    "helper": "new_user_path",
+    "path": "/users/new(.:format)",
+    "requirements": {
+      "controller": "users",
+      "action": "new"
+    },
+    "constraints": {}
+  },
+  {
+    "pattern": "users",
+    "controller": "users",
+    "action": "create",
+    "method": "POST",
+    "name": "users",
+    "helper": "users_path",
+    "path": "/users(.:format)",
+    "requirements": {
+      "controller": "users",
+      "action": "create"
+    },
+    "constraints": {}
+  }
+]
+```
+
+**Filtered JSON Output:**
+```bash
+# Get only POST routes
+rake rails_route_extractor:list:json[,,POST]
+```
+
+```json
+[
+  {
+    "pattern": "users",
+    "controller": "users",
+    "action": "create",
+    "method": "POST",
+    "name": "users",
+    "helper": "users_path",
+    "path": "/users(.:format)",
+    "requirements": {
+      "controller": "users",
+      "action": "create"
+    },
+    "constraints": {}
+  },
+  {
+    "pattern": "posts",
+    "controller": "posts",
+    "action": "create",
+    "method": "POST",
+    "name": "posts",
+    "helper": "posts_path",
+    "path": "/posts(.:format)",
+    "requirements": {
+      "controller": "posts",
+      "action": "create"
+    },
+    "constraints": {}
+  }
+]
+```
+
+**Detailed JSON Output with File Associations:**
+```bash
+rake rails_route_extractor:list:json[,,true]
+```
+
+```json
+[
+  {
+    "pattern": "users",
+    "controller": "users",
+    "action": "index",
+    "method": "GET",
+    "name": "users",
+    "helper": "users_path",
+    "path": "/users(.:format)",
+    "requirements": {
+      "controller": "users",
+      "action": "index"
+    },
+    "constraints": {},
+    "detailed_info": {
+      "pattern": "users#index",
+      "controller": "users",
+      "action": "index",
+      "method": "GET",
+      "name": "users",
+      "helper": "users_path",
+      "path": "/users(.:format)",
+      "requirements": {
+        "controller": "users",
+        "action": "index"
+      },
+      "constraints": {},
+      "files": {
+        "models": [
+          "app/models/user.rb",
+          "app/models/concerns/authenticatable.rb"
+        ],
+        "views": [
+          "app/views/users/index.html.erb",
+          "app/views/users/_user.html.erb",
+          "app/views/layouts/application.html.erb"
+        ],
+        "controllers": [
+          "app/controllers/users_controller.rb",
+          "app/controllers/application_controller.rb",
+          "app/controllers/concerns/authentication.rb"
+        ],
+        "helpers": [
+          "app/helpers/users_helper.rb",
+          "app/helpers/application_helper.rb"
+        ],
+        "concerns": [
+          "app/models/concerns/authenticatable.rb",
+          "app/controllers/concerns/authentication.rb"
+        ]
+      }
+    }
+  }
+]
+```
+
+**Pattern-Filtered JSON Output:**
+```bash
+# Find all routes containing "user"
+rake rails_route_extractor:list:json[user]
+```
+
+```json
+[
+  {
+    "pattern": "users",
+    "controller": "users",
+    "action": "index",
+    "method": "GET",
+    "name": "users",
+    "helper": "users_path",
+    "path": "/users(.:format)",
+    "requirements": {
+      "controller": "users",
+      "action": "index"
+    },
+    "constraints": {}
+  },
+  {
+    "pattern": "users/:id",
+    "controller": "users",
+    "action": "show",
+    "method": "GET",
+    "name": "user",
+    "helper": "user_path",
+    "path": "/users/:id(.:format)",
+    "requirements": {
+      "controller": "users",
+      "action": "show"
+    },
+    "constraints": {}
+  },
+  {
+    "pattern": "admin/users",
+    "controller": "admin/users",
+    "action": "index",
+    "method": "GET",
+    "name": "admin_users",
+    "helper": "admin_users_path",
+    "path": "/admin/users(.:format)",
+    "requirements": {
+      "controller": "admin/users",
+      "action": "index"
+    },
+    "constraints": {}
+  }
+]
+```
+
+**Error Handling:**
+If there's an error during route extraction, the JSON output will contain error information:
+
+```json
+{
+  "error": "Rails application not found. Make sure you're running this in a Rails environment."
+}
+```
 ### Ruby API
 
 ```ruby
@@ -185,6 +403,45 @@ info = RailsRouteExtractor.route_info("users#index")
 valid_routes = ["users#index", "posts#show"]
 available_routes = RailsRouteExtractor.list_routes.map { |r| "#{r[:controller]}##{r[:action]}" }
 valid = valid_routes.all? { |route| available_routes.include?(route) }
+
+# Advanced route analysis
+routes = RailsRouteExtractor.list_routes
+
+# Group routes by controller
+routes_by_controller = routes.group_by { |route| route[:controller] }
+
+# Find all API routes
+api_routes = routes.select { |route| route[:path].include?('/api/') }
+
+# Get route statistics
+stats = {
+  total_routes: routes.length,
+  unique_controllers: routes.map { |r| r[:controller] }.uniq.length,
+  http_methods: routes.map { |r| r[:method] }.uniq,
+  restful_routes: routes.select { |r| 
+    %w[index show new create edit update destroy].include?(r[:action]) 
+  }.length
+}
+
+# Find routes with specific patterns
+admin_routes = routes.select { |r| r[:controller].start_with?('admin/') }
+nested_routes = routes.select { |r| r[:controller].include?('/') }
+
+# Export routes to different formats
+require 'json'
+require 'csv'
+
+# JSON export
+File.write('routes.json', JSON.pretty_generate(routes))
+
+# CSV export  
+CSV.open('routes.csv', 'w') do |csv|
+  csv << ['Controller', 'Action', 'Method', 'Path', 'Name']
+  routes.each do |route|
+    csv << [route[:controller], route[:action], route[:method], 
+            route[:path], route[:name]]
+  end
+end
 ```
 
 ## Configuration
@@ -305,4 +562,73 @@ The gem is available as open source under the terms of the [MIT License](https:/
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and changes.
+
+```
+
+#### Using JSON Output Programmatically
+
+The JSON output can be easily consumed by other tools and scripts:
+
+**Shell/Bash Processing:**
+```bash
+# Count total routes
+rake rails_route_extractor:list:json | jq 'length'
+
+# Get all GET routes
+rake rails_route_extractor:list:json | jq '.[] | select(.method == "GET")'
+
+# Extract just controller names
+rake rails_route_extractor:list:json | jq -r '.[].controller' | sort | uniq
+
+# Find routes for a specific controller
+rake rails_route_extractor:list:json | jq '.[] | select(.controller == "users")'
+
+# Get route paths only
+rake rails_route_extractor:list:json | jq -r '.[].path'
+```
+
+**Ruby Processing:**
+```ruby
+require 'json'
+
+# Get routes as Ruby hash
+routes_json = `rake rails_route_extractor:list:json`
+routes = JSON.parse(routes_json)
+
+# Group routes by controller
+routes_by_controller = routes.group_by { |route| route['controller'] }
+
+# Find all API routes (assuming they start with /api)
+api_routes = routes.select { |route| route['path'].start_with?('/api') }
+
+# Get route statistics
+stats = {
+  total_routes: routes.length,
+  controllers: routes.map { |r| r['controller'] }.uniq.length,
+  methods: routes.map { |r| r['method'] }.uniq
+}
+```
+
+**Python Processing:**
+```python
+import json
+import subprocess
+
+# Get routes data
+result = subprocess.run(['rake', 'rails_route_extractor:list:json'], 
+                       capture_output=True, text=True)
+routes = json.loads(result.stdout)
+
+# Analysis examples
+controllers = set(route['controller'] for route in routes)
+methods = set(route['method'] for route in routes)
+
+# Find REST patterns
+rest_routes = [r for r in routes if r['action'] in ['index', 'show', 'new', 'create', 'edit', 'update', 'destroy']]
+
+print(f"Total routes: {len(routes)}")
+print(f"Controllers: {len(controllers)}")
+print(f"HTTP methods: {', '.join(methods)}")
+print(f"RESTful routes: {len(rest_routes)}")
+```
 
