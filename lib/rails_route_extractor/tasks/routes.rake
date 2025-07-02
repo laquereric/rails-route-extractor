@@ -94,7 +94,6 @@ namespace :rails_route_extractor do
       require 'json'
 
       begin
-        binding.pry
         routes = get_filtered_routes(args)
         
         if args[:detailed] == 'true'
@@ -259,6 +258,24 @@ namespace :rails_route_extractor do
     html
   end
 
+  # Helper method to get a value from a route using a simple path string
+  def get_route_value(route, param_path)
+    # e.g., 'controller' or 'requirements[:action]'
+    keys = param_path.scan(/\w+/).map(&:to_sym)
+    
+    value = route
+    keys.each do |key|
+      if value.is_a?(Hash) && value.key?(key)
+        value = value[key]
+      elsif value.is_a?(Array) && key.to_s.match?(/\d+/) && value.length > key.to_s.to_i
+        value = value[key.to_s.to_i]
+      else
+        return nil # Path doesn't exist
+      end
+    end
+    value
+  end
+
   # Helper method to parse parameter paths from string
   def parse_param_paths(param_paths_str)
     return ['controller', 'action'] if param_paths_str.nil? || param_paths_str.strip.empty?
@@ -277,7 +294,7 @@ namespace :rails_route_extractor do
       
       # Navigate through the parameter hierarchy
       param_paths.each_with_index do |param, index|
-        key = route[param.to_sym] || 'unknown'
+        key = get_route_value(route, param) || 'unknown'
         
         if index == param_paths.length - 1
           # Last level - store the routes

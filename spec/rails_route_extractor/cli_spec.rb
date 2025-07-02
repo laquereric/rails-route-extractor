@@ -43,8 +43,8 @@ RSpec.describe RailsRouteExtractor::CLI do
     end
 
     it "passes verbose option" do
-      expect(RailsRouteExtractor).to receive(:configure).with(hash_including(verbose: true))
       cli.invoke(:extract, [route_pattern], { verbose: true })
+      expect(RailsRouteExtractor.configuration.verbose).to be true
     end
   end
 
@@ -54,7 +54,10 @@ RSpec.describe RailsRouteExtractor::CLI do
     before do
       allow(RailsRouteExtractor).to receive(:extract_routes).and_return({
         success: true,
-        successful_count: 2
+        successful_count: 2,
+        failed_count: 0,
+        total_files: 10,
+        total_size: "1.2MB"
       })
     end
 
