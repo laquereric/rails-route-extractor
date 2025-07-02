@@ -12,7 +12,7 @@ gem "rubocop", "~> 1.21"
 # Development dependencies
 group :development do
   gem "rails_route_tester", git: "https://github.com/laquereric/rails_route_tester"
-  gem "codeql_db", git: "https://github.com/laquereric/codeql_db"
+  # gem "ruby_codeql_db", git: "https://github.com/laquereric/codeql_db"
   gem "yard", "~> 0.9"
   gem "simplecov", "~> 0.21"
   gem "cucumber", "~> 7.0"

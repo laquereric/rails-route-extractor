@@ -6,7 +6,8 @@ RailsRouteExtractor is a comprehensive Ruby gem that provides rake tasks for Rai
 
 - **Route-based Extraction**: Extract MVC code for specific routes or route patterns
 - **Flexible Extraction Modes**: Support for M, V, C, MV, MC, VC, or full MVC extraction
-- **Multiple Output Formats**: List routes in text, JSON, CSV, or HTML formats
+- **Multiple Output Formats**: List routes in text, JSON, CSV, HTML, or YAML formats
+- **Route Cataloging**: Create hierarchical route catalogs organized by any parameter combination
 - **Advanced Filtering**: Filter routes by pattern, controller, or HTTP method
 - **Detailed Route Information**: View associated files (models, views, controllers) for routes
 - **Route Validation**: Validate route patterns against available routes
@@ -114,6 +115,12 @@ rake rails_route_extractor:stats
 # Validate route patterns
 rake rails_route_extractor:validate[users#index,posts#show]
 
+# Create route catalogs organized by parameters
+rake rails_route_extractor:catalog:by_param:text[controller,action]
+rake rails_route_extractor:catalog:by_param:json[method,controller]
+rake rails_route_extractor:catalog:by_param:html[controller]
+rake rails_route_extractor:catalog:by_param:yaml[controller,action,method]
+
 # Clean up extracts
 rake rails_route_extractor:cleanup
 ```
@@ -150,6 +157,67 @@ rake rails_route_extractor:list:html[,,true]
 
 # Export to CSV
 rake rails_route_extractor:list:csv > routes.csv
+```
+
+#### Route Catalog Options
+
+The catalog tasks create hierarchical views of routes organized by specified parameters:
+
+**Available Formats:**
+- `catalog:by_param:text` - Hierarchical text tree output
+- `catalog:by_param:json` - JSON structure with nested organization
+- `catalog:by_param:html` - Interactive HTML with styled hierarchy
+- `catalog:by_param:yaml` - YAML format for configuration files
+
+**Parameter Hierarchy:**
+The first parameter is the parameter path (comma-separated), which defines the hierarchy levels:
+- `controller` - Group by controller name
+- `action` - Group by action name
+- `method` - Group by HTTP method
+- `name` - Group by route name
+
+**Examples:**
+```bash
+# Basic controller-action hierarchy
+rake rails_route_extractor:catalog:by_param:text[controller,action]
+
+# Group by HTTP method first, then controller
+rake rails_route_extractor:catalog:by_param:json[method,controller]
+
+# Single-level grouping by controller
+rake rails_route_extractor:catalog:by_param:html[controller]
+
+# Three-level hierarchy: controller > action > method
+rake rails_route_extractor:catalog:by_param:yaml[controller,action,method]
+
+# With filtering (same as list tasks)
+rake rails_route_extractor:catalog:by_param:text[controller,action,users]  # Filter by pattern
+rake rails_route_extractor:catalog:by_param:json[method,,admin]           # Filter by controller
+```
+
+**Sample Text Output:**
+```
+Route Catalog by controller > action
+================================================================================
+Total routes: 24
+================================================================================
+
+controller: users (8 routes)
+  action: index (2 routes)
+    - GET /users -> users#index
+    - GET /admin/users -> admin/users#index
+  action: show (2 routes)
+    - GET /users/:id -> users#show
+    - GET /admin/users/:id -> admin/users#show
+  action: create (2 routes)
+    - POST /users -> users#create
+    - POST /admin/users -> admin/users#create
+
+controller: posts (6 routes)
+  action: index (1 routes)
+    - GET /posts -> posts#index
+  action: show (1 routes)
+    - GET /posts/:id -> posts#show
 ```
 
 #### JSON Output Examples
@@ -563,72 +631,58 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and changes.
 
-```
+### Working with Catalog Data
 
-#### Using JSON Output Programmatically
+The catalog functionality can also be used programmatically for advanced route analysis:
 
-The JSON output can be easily consumed by other tools and scripts:
-
-**Shell/Bash Processing:**
-```bash
-# Count total routes
-rake rails_route_extractor:list:json | jq 'length'
-
-# Get all GET routes
-rake rails_route_extractor:list:json | jq '.[] | select(.method == "GET")'
-
-# Extract just controller names
-rake rails_route_extractor:list:json | jq -r '.[].controller' | sort | uniq
-
-# Find routes for a specific controller
-rake rails_route_extractor:list:json | jq '.[] | select(.controller == "users")'
-
-# Get route paths only
-rake rails_route_extractor:list:json | jq -r '.[].path'
-```
-
-**Ruby Processing:**
 ```ruby
-require 'json'
+# Generate catalog data directly
+routes = RailsRouteExtractor.list_routes
+param_paths = ['controller', 'action']
 
-# Get routes as Ruby hash
-routes_json = `rake rails_route_extractor:list:json`
-routes = JSON.parse(routes_json)
+# Build the catalog structure
+catalog = {}
+routes.each do |route|
+  controller = route[:controller]
+  action = route[:action]
+  
+  catalog[controller] ||= {}
+  catalog[controller][action] ||= []
+  catalog[controller][action] << route
+end
 
-# Group routes by controller
-routes_by_controller = routes.group_by { |route| route['controller'] }
+# Analyze the catalog
+controller_stats = catalog.map do |controller, actions|
+  {
+    controller: controller,
+    action_count: actions.keys.length,
+    route_count: actions.values.flatten.length,
+    actions: actions.keys
+  }
+end
 
-# Find all API routes (assuming they start with /api)
-api_routes = routes.select { |route| route['path'].start_with?('/api') }
+# Find controllers with the most actions
+top_controllers = controller_stats.sort_by { |c| -c[:action_count] }
 
-# Get route statistics
-stats = {
-  total_routes: routes.length,
-  controllers: routes.map { |r| r['controller'] }.uniq.length,
-  methods: routes.map { |r| r['method'] }.uniq
-}
+# Generate custom reports
+puts "Controllers by complexity:"
+top_controllers.each do |stats|
+  puts "#{stats[:controller]}: #{stats[:action_count]} actions, #{stats[:route_count]} routes"
+end
 ```
 
-**Python Processing:**
-```python
-import json
-import subprocess
+**Shell Processing with jq:**
+```bash
+# Get catalog data and analyze with jq
+rake rails_route_extractor:catalog:by_param:json[controller,action] > catalog.json
 
-# Get routes data
-result = subprocess.run(['rake', 'rails_route_extractor:list:json'], 
-                       capture_output=True, text=True)
-routes = json.loads(result.stdout)
+# Count routes per controller
+jq '.catalog | to_entries | map({controller: .key, total_routes: [.value | to_entries[].value | length] | add}) | sort_by(-.total_routes)' catalog.json
 
-# Analysis examples
-controllers = set(route['controller'] for route in routes)
-methods = set(route['method'] for route in routes)
+# List all actions for a specific controller
+jq '.catalog.users | keys' catalog.json
 
-# Find REST patterns
-rest_routes = [r for r in routes if r['action'] in ['index', 'show', 'new', 'create', 'edit', 'update', 'destroy']]
-
-print(f"Total routes: {len(routes)}")
-print(f"Controllers: {len(controllers)}")
-print(f"HTTP methods: {', '.join(methods)}")
-print(f"RESTful routes: {len(rest_routes)}")
+# Find controllers with specific actions
+jq '.catalog | to_entries | map(select(.value | has("index"))) | map(.key)' catalog.json
 ```
 

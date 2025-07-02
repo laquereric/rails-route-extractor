@@ -38,7 +38,7 @@ Gem::Specification.new do |spec|
 
   # Development dependencies
   #spec.add_development_dependency "rails_route_tester", ">= 0.1.0"
-  spec.add_development_dependency "codeql_db", ">= 0.1.0"
+  # spec.add_development_dependency "codeql_db", ">= 0.1.0"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "cucumber", "~> 7.0"
   spec.add_development_dependency "rake", "~> 13.0"
