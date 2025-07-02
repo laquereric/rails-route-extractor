@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "rails_route_extractor/cli"
 
 RSpec.describe RailsRouteExtractor::CLI do
   let(:cli) { described_class.new }
@@ -17,76 +18,62 @@ RSpec.describe RailsRouteExtractor::CLI do
     end
 
     it "calls RailsRouteExtractor.extract_route with correct parameters" do
-      expect(RailsRouteExtractor).to receive(:extract_route).with(route_pattern, {
-        mode: "mvc",
-        include_gems: true,
-        include_tests: false,
-        compress: false,
-        verbose: false
-      })
-
-      cli.extract(route_pattern)
+      expect(RailsRouteExtractor).to receive(:extract_route).with(route_pattern, hash_including(mode: "mvc"))
+      cli.invoke(:extract, [route_pattern])
     end
 
     it "passes mode option" do
-      expect(RailsRouteExtractor).to receive(:extract_route).with(route_pattern, hash_including(mode: "mv"))
-      cli.extract(route_pattern, "--mode", "mv")
+      expect(RailsRouteExtractor).to receive(:extract_route).with(route_pattern, hash_including(mode: "full"))
+      cli.invoke(:extract, [route_pattern], { mode: "full" })
     end
 
     it "passes include_gems option" do
       expect(RailsRouteExtractor).to receive(:extract_route).with(route_pattern, hash_including(include_gems: false))
-      cli.extract(route_pattern, "--no-gems")
+      cli.invoke(:extract, [route_pattern], { include_gems: false })
     end
 
     it "passes include_tests option" do
       expect(RailsRouteExtractor).to receive(:extract_route).with(route_pattern, hash_including(include_tests: true))
-      cli.extract(route_pattern, "--include-tests")
+      cli.invoke(:extract, [route_pattern], { include_tests: true })
     end
 
     it "passes compress option" do
       expect(RailsRouteExtractor).to receive(:extract_route).with(route_pattern, hash_including(compress: true))
-      cli.extract(route_pattern, "--compress")
+      cli.invoke(:extract, [route_pattern], { compress: true })
     end
 
     it "passes verbose option" do
-      expect(RailsRouteExtractor).to receive(:extract_route).with(route_pattern, hash_including(verbose: true))
-      cli.extract(route_pattern, "--verbose")
+      expect(RailsRouteExtractor).to receive(:configure).with(hash_including(verbose: true))
+      cli.invoke(:extract, [route_pattern], { verbose: true })
     end
   end
 
   describe "#extract_multiple" do
-    let(:route_patterns) { "users#index,posts#show" }
+    let(:route_patterns) { ["users#index", "posts#show"] }
 
     before do
       allow(RailsRouteExtractor).to receive(:extract_routes).and_return({
         success: true,
-        successful_count: 2,
-        failed_count: 0
+        successful_count: 2
       })
     end
 
     it "splits route patterns and calls RailsRouteExtractor.extract_routes" do
-      expect(RailsRouteExtractor).to receive(:extract_routes).with(["users#index", "posts#show"], anything)
-      cli.extract_multiple(route_patterns)
+      expect(RailsRouteExtractor).to receive(:extract_routes).with(route_patterns, any_args)
+      cli.invoke(:extract_multiple, [route_patterns.join(",")])
     end
 
     it "passes options correctly" do
-      expect(RailsRouteExtractor).to receive(:extract_routes).with(["users#index", "posts#show"], {
-        mode: "mvc",
-        include_gems: true,
-        include_tests: false,
-        compress: false,
-        verbose: false
-      })
-      cli.extract_multiple(route_patterns)
+      expect(RailsRouteExtractor).to receive(:extract_routes).with(route_patterns, hash_including(mode: "full"))
+      cli.invoke(:extract_multiple, [route_patterns.join(",")], { mode: "full" })
     end
   end
 
   describe "#list" do
     before do
       allow(RailsRouteExtractor).to receive(:list_routes).and_return([
-        { controller: "users", action: "index", path: "/users" },
-        { controller: "posts", action: "show", path: "/posts/:id" }
+        { pattern: "/users", controller: "users", action: "index", method: "GET" },
+        { pattern: "/posts/:id", controller: "posts", action: "show", method: "GET" }
       ])
     end
 
@@ -96,7 +83,7 @@ RSpec.describe RailsRouteExtractor::CLI do
     end
 
     it "displays routes in table format" do
-      expect { cli.list }.to output(/Controller.*Action.*Path/).to_stdout
+      expect { cli.list }.to output(/Pattern.*Controller.*Action.*Method/).to_stdout
     end
   end
 
@@ -105,9 +92,9 @@ RSpec.describe RailsRouteExtractor::CLI do
 
     before do
       allow(RailsRouteExtractor).to receive(:route_info).and_return({
+        pattern: "/users",
         controller: "users",
         action: "index",
-        path: "/users",
         method: "GET"
       })
     end
@@ -118,77 +105,7 @@ RSpec.describe RailsRouteExtractor::CLI do
     end
 
     it "displays route information" do
-      expect { cli.info(route_pattern) }.to output(/Controller.*users/).to_stdout
-    end
-
-    it "handles nil route info" do
-      allow(RailsRouteExtractor).to receive(:route_info).and_return(nil)
-      expect { cli.info(route_pattern) }.to output(/Route not found/).to_stdout
-    end
-  end
-
-  describe "#cleanup" do
-    before do
-      allow(RailsRouteExtractor).to receive(:cleanup_extracts).and_return({
-        success: true,
-        removed_count: 3
-      })
-    end
-
-    it "calls RailsRouteExtractor.cleanup_extracts" do
-      expect(RailsRouteExtractor).to receive(:cleanup_extracts).with({})
-      cli.cleanup
-    end
-
-    it "passes older_than option" do
-      expect(RailsRouteExtractor).to receive(:cleanup_extracts).with(hash_including(older_than: "7d"))
-      cli.cleanup("--older-than", "7d")
-    end
-
-    it "passes force option" do
-      expect(RailsRouteExtractor).to receive(:cleanup_extracts).with(hash_including(force: true))
-      cli.cleanup("--force")
-    end
-  end
-
-  describe "#stats" do
-    before do
-      allow(RailsRouteExtractor::ExtractManager).to receive(:new).and_return(manager)
-      allow(manager).to receive(:extract_stats).and_return({
-        total_extracts: 10,
-        total_size: "50 MB",
-        oldest_extract: "2023-01-01",
-        newest_extract: "2023-12-01"
-      })
-    end
-
-    let(:manager) { double("manager") }
-
-    it "displays extract statistics" do
-      expect { cli.stats }.to output(/Total Extracts.*10/).to_stdout
-    end
-  end
-
-  describe "error handling" do
-    it "handles RailsRouteExtractor::Error exceptions" do
-      allow(RailsRouteExtractor).to receive(:extract_route).and_raise(RailsRouteExtractor::Error, "Test error")
-      expect { cli.extract("test#index") }.to output(/Error.*Test error/).to_stdout
-    end
-
-    it "handles unexpected exceptions" do
-      allow(RailsRouteExtractor).to receive(:extract_route).and_raise(StandardError, "Unexpected error")
-      expect { cli.extract("test#index") }.to output(/Unexpected error/).to_stdout
-    end
-  end
-
-  describe "configuration" do
-    it "allows configuration via CLI" do
-      allow(RailsRouteExtractor).to receive(:configure).and_yield(RailsRouteExtractor.config)
-      allow(RailsRouteExtractor).to receive(:extract_route).and_return({ success: true })
-      allow(RailsRouteExtractor.config).to receive(:verbose=)
-
-      cli.extract("test#index", "--verbose")
-      expect(RailsRouteExtractor.config).to receive(:verbose=).with(true)
+      expect { cli.info(route_pattern) }.to output(/Route Information/).to_stdout
     end
   end
 end

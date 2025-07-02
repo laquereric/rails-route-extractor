@@ -8,6 +8,36 @@ module RailsRouteExtractor
       @config = config
     end
 
+    def find_model_files(route)
+    end
+
+    def find_view_files(route)
+    end
+
+    def find_controller_files(route)
+    end
+
+    def analyze_file_content(file_path)
+    end
+
+    def extract_dependencies(content)
+    end
+
+    def find_partial_files(content)
+    end
+
+    def find_helper_files(route)
+    end
+
+    def find_concern_files(route)
+    end
+
+    def analyze_associations(content)
+    end
+
+    def generate_file_summary(file_path)
+    end
+
     # Analyze a single file for dependencies and complexity
     def analyze_file(file_path)
       return {} unless File.exist?(file_path)

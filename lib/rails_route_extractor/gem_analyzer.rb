@@ -10,6 +10,18 @@ module RailsRouteExtractor
       @config = config
     end
 
+    def analyze_gems
+    end
+
+    def find_gem_source(gem_name)
+    end
+
+    def get_gem_metadata(gem_name)
+    end
+
+    def analyze_gem_dependencies(gem_name)
+    end
+
     # Analyze all gems in the current bundle
     def analyze_bundle_gems
       return {} unless defined?(Bundler)
@@ -238,7 +250,7 @@ module RailsRouteExtractor
       # Configuration files
       config_pattern = File.join(spec.gem_dir, 'lib', '**', '*config*.rb')
       Dir.glob(config_pattern).each do |file|
-        relative_path = file.sub(spec.gem_dir + '/', '')
+        relative_path = file.sub(gem_dir + '/', '')
         important << relative_path
       end
       

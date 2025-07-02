@@ -97,35 +97,46 @@ module RailsRouteExtractor
       extract_routes_by_pattern("#{controller_name}#", options)
     end
 
+    def extract_stats
+    end
+
     # Get extraction statistics
-    def extraction_statistics
-      extract_base = config.full_extract_path
-      return { extracts_count: 0, total_size: 0, oldest: nil, newest: nil } unless Dir.exist?(extract_base)
+    def extraction_statistics(extract_path)
+      return { error: "Extract path not found" } unless Dir.exist?(extract_path)
       
-      extracts = Dir.glob(File.join(extract_base, '*')).select { |path| File.directory?(path) }
+      manifest_path = File.join(extract_path, 'manifest.json')
+      return { error: "Manifest file not found" } unless File.exist?(manifest_path)
       
-      total_size = 0
-      timestamps = []
-      
-      extracts.each do |extract_path|
-        size = calculate_directory_size(extract_path)
-        total_size += size
+      begin
+        manifest = JSON.parse(File.read(manifest_path))
         
-        # Extract timestamp from directory name
-        basename = File.basename(extract_path)
-        if basename.match(/_(\d{8}_\d{6})$/)
-          timestamp = DateTime.strptime($1, '%Y%m%d_%H%M%S')
-          timestamps << timestamp
+        # Validate manifest structure
+        required_keys = %w[route_extract]
+        missing_keys = required_keys - manifest.keys
+        return { error: "Invalid manifest: missing keys #{missing_keys.join(', ')}" } if missing_keys.any?
+        
+        # Validate files exist
+        missing_files = []
+        manifest['route_extract']['files']['list'].each do |file_path|
+          full_path = File.join(extract_path, file_path)
+          missing_files << file_path unless File.exist?(full_path)
         end
+        
+        if missing_files.any?
+          return { 
+            error: "Missing files: #{missing_files.join(', ')}" 
+          }
+        end
+        
+        {
+          success: true,
+          files_count: manifest['route_extract']['files']['count'],
+          route: manifest['route_extract']['route']
+        }
+        
+      rescue JSON::ParserError => e
+        { error: "Invalid manifest JSON: #{e.message}" }
       end
-      
-      {
-        extracts_count: extracts.length,
-        total_size: format_size(total_size),
-        oldest: timestamps.min,
-        newest: timestamps.max,
-        extract_paths: extracts
-      }
     end
 
     # Clean up old extracts

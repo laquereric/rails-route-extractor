@@ -39,10 +39,10 @@ namespace :rails_route_extractor do
       puts "  rake rails_route_extractor:list:text"
       puts ""
       puts "  # List routes containing 'user' in JSON format"
-      puts "  rake rails_route_extractor:list:json[user]"
+      puts "  rake rails_route_extractor:list:json\[user\]"
       puts ""
       puts "  # List GET routes for 'posts_controller' in HTML with details"
-      puts "  rake rails_route_extractor:list:html[,posts_controller,GET,true]"
+      puts "  rake rails_route_extractor:list:html\[,posts_controller,GET,true\]"
     end
 
     desc "List all available routes in text format"
@@ -94,6 +94,7 @@ namespace :rails_route_extractor do
       require 'json'
 
       begin
+        binding.pry
         routes = get_filtered_routes(args)
         
         if args[:detailed] == 'true'
@@ -156,7 +157,6 @@ namespace :rails_route_extractor do
   # Helper method to filter routes based on arguments
   def get_filtered_routes(args)
     routes = RailsRouteExtractor.list_routes
-    
     # Filter by pattern if provided
     if args[:pattern]
       routes = routes.select { |route| 
@@ -371,8 +371,8 @@ namespace :rails_route_extractor do
     require 'rails_route_extractor'
 
     unless args[:routes]
-      puts "Usage: rake rails_route_extractor:validate[route1,route2,route3]"
-      puts "Example: rake rails_route_extractor:validate[users#index,users#show,posts#index]"
+      puts "Usage: rake rails_route_extractor:validate\\[route1,route2,route3\\]"
+      puts "Example: rake rails_route_extractor:validate\\[users#index,users#show,posts#index\\]"
       exit 1
     end
 
@@ -440,23 +440,29 @@ namespace :rails_route_extractor do
       puts ""
       puts "Examples:"
       puts "  # Catalog by controller, then action, in text format"
-      puts "  rake rails_route_extractor:catalog:by_param:text[controller,action]"
+      puts "  rake rails_route_extractor:catalog:by_param:text\\[controller,action\\]"
       puts ""
       puts "  # Catalog by HTTP method, then controller, for GET requests, in JSON format"
-      puts "  rake rails_route_extractor:catalog:by_param:json['method,controller',,GET]"
+      puts "  rake rails_route_extractor:catalog:by_param:json\\['method,controller',,GET\\]"
       puts ""
       puts "  # Catalog by controller for routes matching 'admin', in HTML format"
-      puts "  rake rails_route_extractor:catalog:by_param:html[controller,admin]"
+      puts "  rake rails_route_extractor:catalog:by_param:html\\[controller,admin\\]"
     end
     
     namespace :by_param do
+      desc "Show help for the by_param catalog tasks. Alias for catalog:help"
+      task :help do
+        Rake::Task['rails_route_extractor:catalog:help'].invoke
+      end
+
       desc "Catalog routes by parameter hierarchy in text format"
       task :text, [:param_paths, :pattern, :controller, :method] => :environment do |_t, args|
         require 'rails_route_extractor'
 
         begin
           param_paths = parse_param_paths(args[:param_paths])
-          routes = get_filtered_routes(args)
+          routes = RailsRouteExtractor.list_routes
+          #routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
           puts "Route Catalog by #{param_paths.join(' > ')}"
@@ -478,7 +484,8 @@ namespace :rails_route_extractor do
 
         begin
           param_paths = parse_param_paths(args[:param_paths])
-          routes = get_filtered_routes(args)
+          routes = RailsRouteExtractor.list_routes
+          #routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
           output = {
@@ -504,7 +511,8 @@ namespace :rails_route_extractor do
 
         begin
           param_paths = parse_param_paths(args[:param_paths])
-          routes = get_filtered_routes(args)
+          routes = RailsRouteExtractor.list_routes
+          #routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
           html_output = generate_html_catalog(catalog, param_paths, routes.length)
@@ -522,7 +530,8 @@ namespace :rails_route_extractor do
 
         begin
           param_paths = parse_param_paths(args[:param_paths])
-          routes = get_filtered_routes(args)
+          routes = RailsRouteExtractor.list_routes
+          #routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
           output = {

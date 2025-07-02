@@ -2,21 +2,20 @@
 
 require_relative "rails_route_extractor/version"
 require_relative "rails_route_extractor/configuration"
+require_relative "rails_route_extractor/railtie"
 require_relative "rails_route_extractor/route_analyzer"
-require_relative "rails_route_extractor/code_extractor"
-require_relative "rails_route_extractor/dependency_tracker"
-require_relative "rails_route_extractor/gem_analyzer"
 require_relative "rails_route_extractor/file_analyzer"
+require_relative "rails_route_extractor/gem_analyzer"
 require_relative "rails_route_extractor/extract_manager"
-require_relative "rails_route_extractor/cli"
-
-# Load Railtie if Rails is available
-if defined?(Rails)
-  require_relative "rails_route_extractor/railtie"
-end
+require_relative "rails_route_extractor/dependency_tracker"
+require_relative "rails_route_extractor/code_extractor"
 
 module RailsRouteExtractor
+  # Define custom error classes
   class Error < StandardError; end
+  class ConfigurationError < Error; end
+  class ExtractionError < Error; end
+  class AnalysisError < Error; end
 
   class << self
     attr_accessor :configuration
