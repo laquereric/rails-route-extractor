@@ -14,10 +14,19 @@ module RailsRouteExtractor
       
       routes = []
       Rails.application.routes.routes.each do |route|
-        next if route.internal? || route.app.is_a?(ActionDispatch::Routing::Redirect)
-        
-        route_info = extract_route_info(route)
-        routes << route_info if route_info
+        begin
+          # Skip internal routes and redirects
+          next if route.app.is_a?(ActionDispatch::Routing::Redirect)
+          next if route.name && route.name.start_with?('rails_')
+          next if route.path.spec.to_s.start_with?('/rails/')
+          
+          route_info = extract_route_info(route)
+          routes << route_info if route_info
+        rescue => e
+          # Skip routes that cause errors and continue processing
+          puts "Warning: Skipping route due to error: #{e.message}" if config.verbose
+          next
+        end
       end
       
       routes.sort_by { |r| [r[:controller], r[:action]] }
@@ -120,28 +129,62 @@ module RailsRouteExtractor
     end
 
     def extract_route_info(route)
-      # Skip routes without controller/action
-      return nil unless route.requirements[:controller] && route.requirements[:action]
-      
-      {
-        pattern: route_pattern(route),
-        controller: route.requirements[:controller],
-        action: route.requirements[:action],
-        method: route.verb,
-        name: route.name,
-        helper: route.name ? "#{route.name}_path" : nil,
-        path: route.path.spec.to_s,
-        requirements: route.requirements,
-        constraints: route.constraints
-      }
+      begin
+        # Skip routes without controller/action
+        controller = route.requirements[:controller] || route.defaults[:controller]
+        action = route.requirements[:action] || route.defaults[:action]
+        
+        return nil unless controller && action
+        
+        # Handle verb which might be a string or symbol, or might not exist
+        verb = begin
+          if route.respond_to?(:verb) && route.verb
+            route.verb.respond_to?(:to_s) ? route.verb.to_s : route.verb.to_s
+          else
+            'GET'
+          end
+        rescue
+          'GET'
+        end
+        
+        # Safely get the path
+        path = begin
+          route.path.spec.to_s
+        rescue
+          route.path.to_s rescue '/'
+        end
+        
+        {
+          pattern: route_pattern(route),
+          controller: controller,
+          action: action,
+          method: verb,
+          name: route.name,
+          helper: route.name ? "#{route.name}_path" : nil,
+          path: path,
+          requirements: route.requirements || {},
+          constraints: route.constraints || {}
+        }
+      rescue => e
+        # If we can't extract route info, return nil to skip this route
+        puts "Warning: Could not extract info for route: #{e.message}" if config.verbose
+        nil
+      end
     end
 
     def route_pattern(route)
-      # Clean up the route pattern for display
-      pattern = route.path.spec.to_s
-      pattern.gsub!(/\(\.:format\)$/, '')
-      pattern.gsub!(/\A\//, '')
-      pattern
+      begin
+        # Clean up the route pattern for display
+        pattern = route.path.spec.to_s
+        pattern.gsub!(/\(\.:format\)$/, '')
+        pattern.gsub!(/\A\//, '')
+        pattern
+      rescue
+        # Fallback if we can't get the pattern
+        controller = route.requirements[:controller] || route.defaults[:controller] || 'unknown'
+        action = route.requirements[:action] || route.defaults[:action] || 'unknown'
+        "#{controller}##{action}"
+      end
     end
 
     def find_route_by_pattern(routes, pattern)
