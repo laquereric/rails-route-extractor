@@ -55,68 +55,75 @@ module RailsRouteExtractor
       modes << 'v' if include_views
       modes << 'c' if include_controllers
 
-      return 'custom' if modes.empty? && (include_helpers || include_partials || include_concerns)
-
-      known_modes = %w[m v c mv mc vc mvc]
       mode_str = modes.sort.join
-      known_modes.include?(mode_str) ? mode_str : 'custom'
+
+      is_custom_extra = include_helpers || include_partials || include_concerns
+
+      if is_custom_extra
+        return 'custom' if modes.any?
+        return 'custom' # for helpers/partials/concerns only
+      end
+
+      known_modes = %w[m v c mc mv vc mvc]
+      if known_modes.include?(mode_str)
+        mode_str
+      elsif modes.any?
+        'custom'
+      else
+        'none'
+      end
     end
 
     # Extraction mode shortcuts
     def mvc_mode
-      @include_models = true
-      @include_views = true
-      @include_controllers = true
+      set_mode(m: true, v: true, c: true)
     end
 
     def models_only
-      @include_models = true
-      @include_views = false
-      @include_controllers = false
+      set_mode(m: true)
     end
 
     def views_only
-      @include_models = false
-      @include_views = true
-      @include_controllers = false
+      set_mode(v: true)
     end
 
     def controllers_only
-      @include_models = false
-      @include_views = false
-      @include_controllers = true
+      set_mode(c: true)
     end
 
     def mv_mode
-      @include_models = true
-      @include_views = true
-      @include_controllers = false
+      set_mode(m: true, v: true)
     end
 
     def mc_mode
-      @include_models = true
-      @include_views = false
-      @include_controllers = true
+      set_mode(m: true, c: true)
     end
 
     def vc_mode
-      @include_models = false
-      @include_views = true
-      @include_controllers = true
+      set_mode(v: true, c: true)
     end
 
     # Get full extract path
     def full_extract_path
-      if rails_application?
-        File.join(@rails_root, @extract_base_path)
-      else
-        File.expand_path(@extract_base_path, Dir.pwd)
-      end
+      base = rails_application? ? detect_rails_root : Dir.pwd
+      File.join(base.to_s, @extract_base_path)
     end
 
     # Check if we're in a Rails application
     def rails_application?
-      !!(@rails_root && File.exist?(File.join(@rails_root, "config", "application.rb")))
+      !!(detect_rails_root && File.exist?(File.join(detect_rails_root, "config", "application.rb")))
+    end
+
+    def set_mode(m: false, v: false, c: false)
+      self.include_models = m
+      self.include_views = v
+      self.include_controllers = c
+      # Also reset other flags for a clean mode
+      self.include_gems = false
+      self.include_tests = false
+      self.include_partials = false
+      self.include_helpers = false
+      self.include_concerns = false
     end
 
     private

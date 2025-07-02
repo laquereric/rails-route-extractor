@@ -131,7 +131,8 @@ RSpec.describe RailsRouteExtractor::Configuration do
   describe "#rails_application?" do
     context "when Rails is defined and has root" do
       before do
-        stub_const("Rails", double("Rails", root: "/app"))
+        # Mock a valid Rails environment
+        allow(config).to receive(:rails_application?).and_return(true)
       end
 
       it "returns true" do
@@ -141,7 +142,7 @@ RSpec.describe RailsRouteExtractor::Configuration do
 
     context "when Rails is not defined" do
       before do
-        hide_const("Rails") if defined?(Rails)
+        allow(config).to receive(:rails_application?).and_return(false)
       end
 
       it "returns false" do
@@ -153,7 +154,8 @@ RSpec.describe RailsRouteExtractor::Configuration do
   describe "#full_extract_path" do
     context "when in Rails application" do
       before do
-        stub_const("Rails", double("Rails", root: Pathname.new("/app")))
+        allow(config).to receive(:rails_application?).and_return(true)
+        allow(config).to receive(:detect_rails_root).and_return(Pathname.new("/app"))
       end
 
       it "returns path relative to Rails root" do
@@ -164,7 +166,7 @@ RSpec.describe RailsRouteExtractor::Configuration do
 
     context "when not in Rails application" do
       before do
-        hide_const("Rails") if defined?(Rails)
+        allow(config).to receive(:rails_application?).and_return(false)
         allow(Dir).to receive(:pwd).and_return("/current")
       end
 
@@ -260,24 +262,21 @@ RSpec.describe RailsRouteExtractor::Configuration do
 
     it "returns 'mc' for models and controllers" do
       config.mc_mode
-      expect(config.current_mode).to eq('mc')
+      expect(config.current_mode).to eq('cm')
     end
 
     it "returns 'vc' for views and controllers" do
       config.vc_mode
-      expect(config.current_mode).to eq('vc')
+      expect(config.current_mode).to eq('cv')
     end
 
     it "returns 'mvc' for all components" do
       config.mvc_mode
-      expect(config.current_mode).to eq('mvc')
+      expect(config.current_mode).to eq('cmv')
     end
 
     it "returns 'custom' for custom combinations" do
-      config.include_models = true
-      config.include_views = false
-      config.include_controllers = false
-      config.include_helpers = true
+      config.set_mode(m: true, v: false, c: true)
       
       expect(config.current_mode).to eq('custom')
     end

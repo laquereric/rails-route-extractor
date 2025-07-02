@@ -6,6 +6,31 @@ RSpec.describe RailsRouteExtractor::RouteAnalyzer do
   let(:config) { RailsRouteExtractor::Configuration.new }
   let(:analyzer) { described_class.new(config) }
 
+  # Set up a consistent mock Rails environment for all tests in this file
+  before do
+    # Mock Rails application and routes
+    routes_double = double("routes")
+    allow(routes_double).to receive(:routes).and_return([
+      double("route1",
+        app: double('app1', is_a?: false),
+        verb: "GET",
+        path: double(spec: "/users"),
+        defaults: { controller: "users", action: "index" },
+        name: "users"
+      ),
+      double("route2",
+        app: double('app2', is_a?: false),
+        verb: "POST",
+        path: double(spec: "/users"),
+        defaults: { controller: "users", action: "create" },
+        name: "users"
+      )
+    ])
+    
+    app_double = double("application", routes: routes_double)
+    stub_const("Rails", double("Rails", application: app_double, root: Pathname.new("/fake/rails/root")))
+  end
+
   describe "#initialize" do
     it "stores the configuration" do
       expect(analyzer.config).to eq(config)
@@ -13,31 +38,6 @@ RSpec.describe RailsRouteExtractor::RouteAnalyzer do
   end
 
   describe "#list_routes" do
-    before do
-      # Mock Rails routes
-      routes_double = double("routes")
-      allow(routes_double).to receive(:routes).and_return([
-        double("route",
-          app: double('app', is_a?: false),
-          verb: "GET",
-          path: double(spec: "/users"),
-          defaults: { controller: "users", action: "index" },
-          name: "users"
-        ),
-        double("route",
-          app: double('app', is_a?: false),
-          verb: "POST",
-          path: double(spec: "/users"),
-          defaults: { controller: "users", action: "create" },
-          name: "users"
-        )
-      ])
-      
-      # Mock Rails application
-      app_double = double("application", routes: routes_double)
-      stub_const("Rails", double("Rails", application: app_double))
-    end
-
     it "returns an array of route hashes" do
       routes = analyzer.list_routes
       
