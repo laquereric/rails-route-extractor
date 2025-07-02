@@ -4,16 +4,16 @@ require "rails/railtie"
 
 module RailsRouteExtractor
   class Railtie < Rails::Railtie
-    railtie_name :route_extract
+    railtie_name :rails_route_extractor
 
     rake_tasks do
-      load "route_extract/tasks/extract.rake"
-      load "route_extract/tasks/routes.rake"
-      load "route_extract/tasks/cleanup.rake"
+      load "rails_route_extractor/tasks/extract.rake"
+      load "rails_route_extractor/tasks/routes.rake"
+      load "rails_route_extractor/tasks/cleanup.rake"
     end
 
-    initializer "route_extract.configure" do |app|
-      RouteExtract.configure do |config|
+    initializer "rails_route_extractor.configure" do |app|
+      RailsRouteExtractor.configure do |config|
         config.rails_root = Rails.root.to_s
         config.extract_base_path = Rails.root.join("route_extracts").to_s
         
@@ -31,8 +31,7 @@ module RailsRouteExtractor
 
     # Add generators if needed
     generators do
-      require "route_extract/generators/install_generator"
+      require "rails_route_extractor/generators/install_generator"
     end
   end
 end
-

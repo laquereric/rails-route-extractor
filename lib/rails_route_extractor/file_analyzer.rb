@@ -294,7 +294,7 @@ module RailsRouteExtractor
       end
 
       # Hardcoded secrets
-      if content.match?/(password|secret|key|token)\s*=\s*["'][^"']+["']/)
+      if content.match?(/(password|secret|key|token)\s*=\s*["'].+?["']/)
         issues << {
           type: 'hardcoded_secret',
           description: 'Potential hardcoded secret',

@@ -6,6 +6,11 @@ RailsRouteExtractor is a comprehensive Ruby gem that provides rake tasks for Rai
 
 - **Route-based Extraction**: Extract MVC code for specific routes or route patterns
 - **Flexible Extraction Modes**: Support for M, V, C, MV, MC, VC, or full MVC extraction
+- **Multiple Output Formats**: List routes in text, JSON, CSV, or HTML formats
+- **Advanced Filtering**: Filter routes by pattern, controller, or HTTP method
+- **Detailed Route Information**: View associated files (models, views, controllers) for routes
+- **Route Validation**: Validate route patterns against available routes
+- **Route Statistics**: Analyze route distribution and usage patterns
 - **Dependency Tracking**: Automatically include referenced gem source files
 - **Intelligent Analysis**: Leverages CodeQL for comprehensive code analysis
 - **Rails Integration**: Seamless integration with Rails applications via Railtie
@@ -35,6 +40,8 @@ $ gem install rails_route_extractor
 
 ## Usage
 
+> **Breaking Change**: The `rails_route_extractor:list` rake task has been moved to `rails_route_extractor:list:text` and now supports multiple output formats and filtering options. Update your scripts accordingly.
+
 ### Command Line Interface
 
 ```bash
@@ -47,11 +54,28 @@ rails_route_extractor extract "users#show" --mode mv
 # Extract multiple routes
 rails_route_extractor extract_multiple "users#index,users#show,posts#index"
 
-# List all available routes
+# List all available routes (text format)
 rails_route_extractor list
+
+# List routes with filtering
+rails_route_extractor list --pattern users              # Filter by pattern
+rails_route_extractor list --controller users           # Filter by controller  
+rails_route_extractor list --method GET                 # Filter by HTTP method
+
+# List routes in different formats
+rails_route_extractor list --format json                # JSON format
+rails_route_extractor list --format csv                 # CSV format  
+rails_route_extractor list --format html                # HTML format
+rails_route_extractor list --format json --detailed     # JSON with detailed info
 
 # Get detailed route information
 rails_route_extractor info "users#index"
+
+# Show route statistics
+rails_route_extractor stats
+
+# Validate route patterns
+rails_route_extractor validate "users#index,posts#show"
 
 # Clean up old extracts
 rails_route_extractor cleanup --older_than 7d
@@ -69,11 +93,63 @@ rake rails_route_extractor:extract[users#show,mv]
 # Extract multiple routes
 rake rails_route_extractor:extract_multiple[users#index,users#show]
 
-# List all routes
-rake rails_route_extractor:list
+# List all routes in text format
+rake rails_route_extractor:list:text
+
+# List routes with filtering
+rake rails_route_extractor:list:text[users]                    # Filter by pattern
+rake rails_route_extractor:list:text[,users_controller]        # Filter by controller
+rake rails_route_extractor:list:text[,,GET]                    # Filter by HTTP method
+
+# List routes in different formats
+rake rails_route_extractor:list:json                           # JSON format
+rake rails_route_extractor:list:json[,,GET,true]              # JSON with detailed info
+rake rails_route_extractor:list:csv                           # CSV format
+rake rails_route_extractor:list:html                          # HTML format
+rake rails_route_extractor:list:html[users,,true]             # HTML with detailed info
+
+# Show route statistics
+rake rails_route_extractor:stats
+
+# Validate route patterns
+rake rails_route_extractor:validate[users#index,posts#show]
 
 # Clean up extracts
 rake rails_route_extractor:cleanup
+```
+
+#### Route Listing Options
+
+The route listing tasks support multiple output formats and filtering options:
+
+**Output Formats:**
+- `list:text` - Formatted table output (default)
+- `list:json` - JSON format for programmatic use
+- `list:csv` - CSV format for spreadsheets and data analysis
+- `list:html` - Styled HTML table with modern CSS
+
+**Filtering Parameters:**
+- `pattern` - Search across controller, action, path, and route name
+- `controller` - Filter by specific controller name
+- `method` - Filter by HTTP method (GET, POST, PUT, DELETE, etc.)
+- `detailed` - Include associated files information (JSON/HTML only)
+
+**Examples:**
+```bash
+# Basic text listing
+rake rails_route_extractor:list:text
+
+# Find routes containing "user"
+rake rails_route_extractor:list:text[user]
+
+# Show only GET routes for users controller
+rake rails_route_extractor:list:json[,users,GET]
+
+# Generate HTML report with file associations
+rake rails_route_extractor:list:html[,,true]
+
+# Export to CSV
+rake rails_route_extractor:list:csv > routes.csv
 ```
 
 ### Ruby API
@@ -97,8 +173,18 @@ results = RailsRouteExtractor.extract_routes(["users#index", "posts#show"])
 # List available routes
 routes = RailsRouteExtractor.list_routes
 
-# Get route information
+# List routes with filtering
+filtered_routes = RailsRouteExtractor.list_routes.select do |route|
+  route[:controller]&.include?("users")
+end
+
+# Get route information with file associations
 info = RailsRouteExtractor.route_info("users#index")
+
+# Validate route patterns
+valid_routes = ["users#index", "posts#show"]
+available_routes = RailsRouteExtractor.list_routes.map { |r| "#{r[:controller]}##{r[:action]}" }
+valid = valid_routes.all? { |route| available_routes.include?(route) }
 ```
 
 ## Configuration
