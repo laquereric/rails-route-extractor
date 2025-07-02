@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "thor"
+require_relative '../rails_route_extractor'
 
 module RailsRouteExtractor
   class CLI < Thor
@@ -21,7 +22,7 @@ module RailsRouteExtractor
       say "Extracting route: #{route_pattern}", :green
       
       begin
-        result = RouteExtract.extract_route(route_pattern, extract_options)
+        result = RailsRouteExtractor.extract_route(route_pattern, extract_options)
         
         if result[:success]
           say "✓ Successfully extracted to: #{result[:extract_path]}", :green
@@ -51,7 +52,7 @@ module RailsRouteExtractor
       say "Extracting #{route_patterns.length} routes", :green
       
       begin
-        result = RouteExtract.extract_routes(route_patterns, extract_options)
+        result = RailsRouteExtractor.extract_routes(route_patterns, extract_options)
         
         if result[:success]
           say "✓ Successfully extracted #{result[:successful_count]} routes", :green
@@ -76,7 +77,7 @@ module RailsRouteExtractor
       configure_from_options
       
       begin
-        routes = RouteExtract.list_routes
+        routes = RailsRouteExtractor.list_routes
         
         if options[:filter]
           routes = routes.select { |route| route[:pattern].match?(Regexp.new(options[:filter], Regexp::IGNORECASE)) }
@@ -102,7 +103,7 @@ module RailsRouteExtractor
       configure_from_options
       
       begin
-        info = RouteExtract.route_info(route_pattern)
+        info = RailsRouteExtractor.route_info(route_pattern)
         
         if info
           say "Route Information:", :green
@@ -137,7 +138,7 @@ module RailsRouteExtractor
       configure_from_options
       
       begin
-        result = RouteExtract.cleanup_extracts(cleanup_options)
+        result = RailsRouteExtractor.cleanup_extracts(cleanup_options)
         
         if result[:success]
           say "✓ Cleaned up #{result[:removed_count]} extract directories", :green
@@ -155,13 +156,13 @@ module RailsRouteExtractor
 
     desc "version", "Show version information"
     def version
-      say "RouteExtract version #{RouteExtract::VERSION}", :green
+      say "RailsRouteExtractor version #{RailsRouteExtractor::VERSION}", :green
     end
 
     private
 
     def configure_from_options
-      RouteExtract.configure do |config|
+      RailsRouteExtractor.configure do |config|
         config.verbose = options[:verbose]
         config.rails_root = options[:rails_root] if options[:rails_root]
       end

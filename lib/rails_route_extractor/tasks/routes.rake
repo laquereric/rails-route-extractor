@@ -1,6 +1,18 @@
 # frozen_string_literal: true
 puts "routes.rake"
 namespace :rails_route_extractor do
+  desc "Show help for rails_route_extractor tasks"
+  task :help do
+    puts "Usage: rake rails_route_extractor:<command>"
+    puts ""
+    puts "Available commands:"
+    puts "  list             - List all routes. For options, run: rake rails_route_extractor:list:help"
+    puts "  catalog          - Create a route catalog. For options, run: rake rails_route_extractor:catalog:help"
+    puts "  stats            - Show route statistics."
+    puts "  validate         - Validate route patterns."
+    puts "  help             - Show this help message."
+  end
+
   desc "List all available routes in text format (default). See other formats under list namespace."
   task :list, [:pattern, :controller, :method] => :environment do |_t, args|
     Rake::Task['rails_route_extractor:list:text'].invoke(args[:pattern], args[:controller], args[:method])
@@ -37,40 +49,43 @@ namespace :rails_route_extractor do
     task :text, [:pattern, :controller, :method] => :environment do |_t, args|
       require 'rails_route_extractor'
 
+      routes = get_filtered_routes(args)
+
+      # Determine column widths
+      controller_width = (routes.map { |r| r[:controller]&.length || 0 } + ["Controller".length]).max + 2
+      action_width = (routes.map { |r| r[:action]&.length || 0 } + ["Action".length]).max + 2
+      path_width = (routes.map { |r| r[:path]&.length || 0 } + ["Path".length]).max + 2
+      method_width = (routes.map { |r| r[:method]&.length || 0 } + ["Method".length]).max + 2
+      name_width = (routes.map { |r| r[:name]&.length || 0 } + ["Name".length]).max + 2
+      total_width = controller_width + action_width + path_width + method_width + name_width
+
+      header_format = "%-#{controller_width}s%-#{action_width}s%-#{path_width}s%-#{method_width}s%-#{name_width}s"
+      row_format = "%-#{controller_width}s%-#{action_width}s%-#{path_width}s%-#{method_width}s%-#{name_width}s"
+
       puts "Available Routes:"
-      puts "=" * 80
-      puts sprintf("%-20s %-15s %-20s %-10s %-15s", "Controller", "Action", "Path", "Method", "Name")
-      puts "=" * 80
+      puts "=" * total_width
+      puts sprintf(header_format, "Controller", "Action", "Path", "Method", "Name")
+      puts "=" * total_width
 
-      begin
-        routes = get_filtered_routes(args)
-
-        if routes.empty?
-          puts "No routes found."
-          exit 1
-        end
-
-        routes.each do |route|
-          controller = route[:controller] || "N/A"
-          action = route[:action] || "N/A"
-          path = route[:path] || "N/A"
-          method = route[:method] || "GET"
-          name = route[:name] || "N/A"
-
-          puts sprintf("%-20s %-15s %-20s %-10s %-15s", 
-                      controller[0..19], 
-                      action[0..14], 
-                      path[0..19], 
-                      method, 
-                      name[0..14])
-        end
-
-        puts "=" * 80
-        puts "Total routes: #{routes.length}"
-      rescue => e
-        puts "❌ Error listing routes: #{e.message}"
+      if routes.empty?
+        puts "No routes found."
         exit 1
       end
+
+      routes.each do |route|
+        puts sprintf(row_format,
+                    route[:controller] || "N/A",
+                    route[:action] || "N/A",
+                    route[:path] || "N/A",
+                    route[:method] || "GET",
+                    route[:name] || "N/A")
+      end
+
+      puts "=" * total_width
+      puts "Total routes: #{routes.length}"
+    rescue => e
+      puts "❌ Error listing routes: #{e.message}"
+      exit 1
     end
 
     desc "List all available routes in JSON format"
@@ -484,7 +499,7 @@ namespace :rails_route_extractor do
       end
 
       desc "Catalog routes by parameter hierarchy in HTML format"
-      task :html, [:param_paths, :pattern, :controller, :method, :detailed] => :environment do |_t, args|
+      task :html, [:param_paths, :pattern, :controller, :method] => :environment do |_t, args|
         require 'rails_route_extractor'
 
         begin
@@ -492,7 +507,8 @@ namespace :rails_route_extractor do
           routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
-          puts generate_html_catalog(catalog, param_paths, routes, args[:detailed] == 'true')
+          html_output = generate_html_catalog(catalog, param_paths, routes.length)
+          puts html_output
         rescue => e
           puts "<html><body><h1>Error</h1><p>#{e.message}</p></body></html>"
           exit 1
@@ -500,7 +516,7 @@ namespace :rails_route_extractor do
       end
 
       desc "Catalog routes by parameter hierarchy in YAML format"
-      task :yaml, [:param_paths, :pattern, :controller, :method, :detailed] => :environment do |_t, args|
+      task :yaml, [:param_paths, :pattern, :controller, :method] => :environment do |_t, args|
         require 'rails_route_extractor'
         require 'yaml'
 
@@ -510,145 +526,70 @@ namespace :rails_route_extractor do
           catalog = build_param_catalog(routes, param_paths)
           
           output = {
-            'param_hierarchy' => param_paths,
-            'total_routes' => routes.length,
-            'catalog' => catalog
+            param_hierarchy: param_paths,
+            total_routes: routes.length,
+            catalog: catalog
           }
           
-          if args[:detailed] == 'true'
-            output['routes'] = routes.map { |r| r.transform_keys(&:to_s) }
-          end
-          
-          puts YAML.dump(output)
+          puts output.to_yaml
         rescue => e
-          puts YAML.dump({ 'error' => e.message })
+          puts ({ error: e.message }).to_yaml
           exit 1
         end
       end
     end
   end
 
-  # Helper method to generate HTML catalog
-  def generate_html_catalog(catalog, param_paths, routes, detailed = false)
-    html = <<~HTML
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Route Catalog by #{param_paths.join(' > ')}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          .catalog { margin: 20px 0; }
-          .level-0 { margin: 20px 0; border-left: 3px solid #007cba; padding-left: 15px; }
-          .level-1 { margin: 15px 0; border-left: 3px solid #28a745; padding-left: 15px; }
-          .level-2 { margin: 10px 0; border-left: 3px solid #ffc107; padding-left: 15px; }
-          .level-3 { margin: 5px 0; border-left: 3px solid #dc3545; padding-left: 15px; }
-          .route-item { 
-            background: #f8f9fa; 
-            border: 1px solid #dee2e6; 
-            border-radius: 4px; 
-            padding: 8px; 
-            margin: 4px 0; 
-            font-family: monospace; 
-            font-size: 0.9em;
-          }
-          .route-count { 
-            color: #6c757d; 
-            font-weight: bold; 
-            background: #e9ecef; 
-            padding: 2px 6px; 
-            border-radius: 3px; 
-            margin-left: 10px;
-          }
-          h1 { color: #333; border-bottom: 2px solid #007cba; padding-bottom: 10px; }
-          h2 { color: #007cba; margin-top: 25px; }
-          h3 { color: #28a745; margin-top: 20px; }
-          h4 { color: #ffc107; margin-top: 15px; }
-          h5 { color: #dc3545; margin-top: 10px; }
-          .summary { 
-            background: #e7f3ff; 
-            border: 1px solid #b3d7ff; 
-            border-radius: 5px; 
-            padding: 15px; 
-            margin: 20px 0; 
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Route Catalog by #{param_paths.join(' > ')}</h1>
-        <div class="summary">
-          <strong>Total routes:</strong> #{routes.length}<br>
-          <strong>Hierarchy:</strong> #{param_paths.join(' → ')}<br>
-          <strong>Generated:</strong> #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}
-        </div>
-        <div class="catalog">
-    HTML
-
-    html += generate_html_catalog_level(catalog, param_paths, 0)
-
-    html += <<~HTML
-        </div>
-      </body>
-      </html>
-    HTML
-
-    html
-  end
-
-  # Helper method to generate HTML catalog level recursively
-  def generate_html_catalog_level(catalog, param_paths, level)
+  # Helper method to generate HTML output for catalog
+  def generate_html_catalog(catalog, param_paths, total_routes, level = 0)
     html = ""
-    header_tag = "h#{[level + 2, 6].min}"
-    
-    catalog.each do |key, value|
-      if value.is_a?(Array)
-        # Leaf level - display routes
-        count_badge = "<span class='route-count'>#{value.length}</span>"
-        html += "<#{header_tag}>#{param_paths[level]}: #{key}#{count_badge}</#{header_tag}>"
-        html += "<div class='level-#{[level, 3].min}'>"
-        
-        value.each do |route|
-          method_color = case route[:method]
-                        when 'GET' then '#28a745'
-                        when 'POST' then '#007cba'
-                        when 'PUT', 'PATCH' then '#ffc107'
-                        when 'DELETE' then '#dc3545'
-                        else '#6c757d'
-                        end
-          
-          html += "<div class='route-item'>"
-          html += "<span style='color: #{method_color}; font-weight: bold;'>#{route[:method] || 'GET'}</span> "
-          html += "<code>#{route[:path]}</code> → "
-          html += "<strong>#{route[:controller]}##{route[:action]}</strong>"
-          html += "<br><small>Name: #{route[:name] || 'N/A'}</small>" if route[:name]
-          html += "</div>"
-        end
-        
-        html += "</div>"
-      else
-        # Branch level - recurse
-        total_routes = count_routes_in_branch(value)
-        count_badge = "<span class='route-count'>#{total_routes}</span>"
-        html += "<#{header_tag}>#{param_paths[level]}: #{key}#{count_badge}</#{header_tag}>"
-        html += "<div class='level-#{[level, 3].min}'>"
-        html += generate_html_catalog_level(value, param_paths, level + 1)
-        html += "</div>"
-      end
+    if level == 0
+      html += <<~HTML
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Route Catalog</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .catalog { list-style-type: none; padding-left: 20px; }
+            .catalog-item { margin-bottom: 10px; }
+            .catalog-key { font-weight: bold; }
+            .route-list { list-style-type: none; padding-left: 20px; }
+            .route-item { margin-top: 5px; }
+          </style>
+        </head>
+        <body>
+          <h1>Route Catalog by #{param_paths.join(' > ')}</h1>
+          <p>Total routes: #{total_routes}</p>
+      HTML
     end
-    
-    html
-  end
 
-  # Helper method to count routes in a branch
-  def count_routes_in_branch(branch)
-    total = 0
-    branch.each do |_, value|
+    html += "<ul class='catalog'>"
+    catalog.each do |key, value|
+      html += "<li class='catalog-item'>"
+      html += "<span class='catalog-key'>#{param_paths[level]}: #{key}</span>"
+      
       if value.is_a?(Array)
-        total += value.length
+        html += "<ul class='route-list'>"
+        value.each do |route|
+          route_info = "#{route[:method] || 'GET'} #{route[:path]} -> #{route[:controller]}##{route[:action]}"
+          html += "<li class='route-item'>#{route_info}</li>"
+        end
+        html += "</ul>"
       else
-        total += count_routes_in_branch(value)
+        html += generate_html_catalog(value, param_paths, total_routes, level + 1)
       end
+      html += "</li>"
     end
-    total
+    html += "</ul>"
+
+    if level == 0
+      html += <<~HTML
+        </body>
+        </html>
+      HTML
+    end
+    html
   end
 end
 
