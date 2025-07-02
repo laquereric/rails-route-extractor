@@ -18,12 +18,14 @@ RSpec.describe RailsRouteExtractor::RouteAnalyzer do
       routes_double = double("routes")
       allow(routes_double).to receive(:routes).and_return([
         double("route",
+          app: double('app', is_a?: false),
           verb: "GET",
           path: double(spec: "/users"),
           defaults: { controller: "users", action: "index" },
           name: "users"
         ),
         double("route",
+          app: double('app', is_a?: false),
           verb: "POST",
           path: double(spec: "/users"),
           defaults: { controller: "users", action: "create" },
@@ -31,7 +33,9 @@ RSpec.describe RailsRouteExtractor::RouteAnalyzer do
         )
       ])
       
-      stub_const("Rails", double("Rails", application: double(routes: routes_double)))
+      # Mock Rails application
+      app_double = double("application", routes: routes_double)
+      stub_const("Rails", double("Rails", application: app_double))
     end
 
     it "returns an array of route hashes" do

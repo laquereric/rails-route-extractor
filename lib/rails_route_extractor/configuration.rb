@@ -40,6 +40,28 @@ module RailsRouteExtractor
       @manifest_format = :json
     end
 
+    def apply_mode(mode_str)
+      return unless mode_str.is_a?(String)
+
+      modes = mode_str.chars.uniq
+      self.include_models = modes.include?('m')
+      self.include_views = modes.include?('v')
+      self.include_controllers = modes.include?('c')
+    end
+
+    def current_mode
+      modes = []
+      modes << 'm' if include_models
+      modes << 'v' if include_views
+      modes << 'c' if include_controllers
+
+      return 'custom' if modes.empty? && (include_helpers || include_partials || include_concerns)
+
+      known_modes = %w[m v c mv mc vc mvc]
+      mode_str = modes.sort.join
+      known_modes.include?(mode_str) ? mode_str : 'custom'
+    end
+
     # Extraction mode shortcuts
     def mvc_mode
       @include_models = true
@@ -85,33 +107,27 @@ module RailsRouteExtractor
 
     # Get full extract path
     def full_extract_path
-      if @rails_root
+      if rails_application?
         File.join(@rails_root, @extract_base_path)
       else
-        File.expand_path(@extract_base_path)
+        File.expand_path(@extract_base_path, Dir.pwd)
       end
     end
 
     # Check if we're in a Rails application
     def rails_application?
-      @rails_root && File.exist?(File.join(@rails_root, "config", "application.rb"))
+      !!(@rails_root && File.exist?(File.join(@rails_root, "config", "application.rb")))
     end
 
     private
 
     def detect_rails_root
-      if defined?(Rails) && Rails.respond_to?(:root)
+      if defined?(Rails) && Rails.respond_to?(:root) && Rails.root
         Rails.root.to_s
-      elsif File.exist?("config/application.rb")
-        Dir.pwd
       else
-        current_dir = Dir.pwd
-        while current_dir != "/"
-          if File.exist?(File.join(current_dir, "config", "application.rb"))
-            return current_dir
-          end
-          current_dir = File.dirname(current_dir)
-        end
+        # In a non-Rails environment, we can't reliably find a root.
+        # We'll default to the current working directory for path expansion,
+        # but @rails_root remains nil to indicate it's not a Rails app.
         nil
       end
     end

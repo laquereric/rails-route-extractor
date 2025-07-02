@@ -53,6 +53,32 @@ module RailsRouteExtractor
       route
     end
 
+    def analyze_route_complexity(route_pattern)
+      dependencies = route_dependencies(route_pattern)
+      return nil unless dependencies
+
+      file_analyzer = FileAnalyzer.new(config)
+      file_analysis = file_analyzer.analyze_files(dependencies.values.flatten.compact)
+
+      {
+        file_count: dependencies.values.flatten.compact.uniq.count,
+        total_lines: file_analysis[:summary][:total_lines],
+        gem_dependencies: dependencies[:gems].count,
+        dependency_depth: 5 # Placeholder, actual calculation is complex
+      }
+    end
+
+    def route_dependencies(route_pattern)
+      route = route_info(route_pattern)
+      return nil unless route
+
+      files = route[:files].values.flatten.compact
+      dependency_tracker = DependencyTracker.new(config)
+      dependencies = dependency_tracker.track_dependencies(files)
+
+      route[:files].merge(dependencies)
+    end
+
     def analyze_route(route_pattern)
     end
 
@@ -143,8 +169,29 @@ module RailsRouteExtractor
 
     private
 
+    def find_associated_files(controller, action)
+      # This is a simplified placeholder. A real implementation would be more robust.
+      {
+        controllers: ["app/controllers/#{controller}_controller.rb"],
+        models: ["app/models/#{controller.singularize}.rb"],
+        views: ["app/views/#{controller}/#{action}.html.erb"],
+        helpers: ["app/helpers/#{controller}_helper.rb"],
+        concerns: []
+      }
+    end
+
+    def extract_route_pattern(defaults)
+      "#{defaults[:controller]}##{defaults[:action]}"
+    end
+
+    def extract_route_helper(name, method)
+      return nil unless name
+      # This is a simplification. Real helper generation is more complex.
+      name.end_with?("s") || method == "POST" ? "#{name}_path" : "#{name.pluralize}_path"
+    end
+
     def ensure_rails_environment!
-      unless defined?(Rails) && Rails.application
+      unless defined?(Rails) && Rails.respond_to?(:application) && Rails.application
         raise Error, "Rails application not found. Make sure you're running this in a Rails environment."
       end
     end

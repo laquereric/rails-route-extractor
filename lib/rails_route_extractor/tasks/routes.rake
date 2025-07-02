@@ -14,42 +14,36 @@ namespace :rails_route_extractor do
   end
 
   desc "List all available routes in text format (default). See other formats under list namespace."
-  task :list, [:pattern, :controller, :method] => :environment do |_t, args|
-    Rake::Task['rails_route_extractor:list:text'].invoke(args[:pattern], args[:controller], args[:method])
+  task :list, [:detailed] => :environment do |_t, args|
+    Rake::Task['rails_route_extractor:list:text'].invoke(args[:detailed])
     Rake::Task['rails_route_extractor:list:text'].reenable
   end
 
   namespace :list do
     desc "Show help for the list tasks"
     task :help do
-      puts "Usage: rake rails_route_extractor:list:<format>[pattern,controller,method,detailed]"
+      puts "Usage: rake rails_route_extractor:list:<format>[detailed]"
       puts ""
-      puts "Lists available routes in various formats with filtering options."
+      puts "Lists available routes in various formats."
       puts ""
       puts "Available formats: text, json, csv, html"
       puts ""
       puts "Arguments:"
-      puts "  pattern:      (Optional) Filter routes by a pattern in controller, action, path, or name."
-      puts "  controller:   (Optional) Filter routes by a specific controller name."
-      puts "  method:       (Optional) Filter routes by an HTTP method (e.g., GET, POST)."
       puts "  detailed:     (Optional, for json/html) Set to 'true' to include detailed file association info."
       puts ""
       puts "Examples:"
       puts "  # List all routes in text format"
       puts "  rake rails_route_extractor:list:text"
       puts ""
-      puts "  # List routes containing 'user' in JSON format"
-      puts "  rake rails_route_extractor:list:json\[user\]"
-      puts ""
-      puts "  # List GET routes for 'posts_controller' in HTML with details"
-      puts "  rake rails_route_extractor:list:html\[,posts_controller,GET,true\]"
+      puts "  # List all routes in JSON format with details"
+      puts "  rake rails_route_extractor:list:json[true]"
     end
 
     desc "List all available routes in text format"
-    task :text, [:pattern, :controller, :method] => :environment do |_t, args|
+    task :text => :environment do |_t, _args|
       require 'rails_route_extractor'
 
-      routes = get_filtered_routes(args)
+      routes = RailsRouteExtractor.list_routes
 
       # Determine column widths
       controller_width = (routes.map { |r| r[:controller]&.length || 0 } + ["Controller".length]).max + 2
@@ -89,12 +83,12 @@ namespace :rails_route_extractor do
     end
 
     desc "List all available routes in JSON format"
-    task :json, [:pattern, :controller, :method, :detailed] => :environment do |_t, args|
+    task :json, [:detailed] => :environment do |_t, args|
       require 'rails_route_extractor'
       require 'json'
 
       begin
-        routes = get_filtered_routes(args)
+        routes = RailsRouteExtractor.list_routes
         
         if args[:detailed] == 'true'
           detailed_routes = routes.map do |route|
@@ -113,12 +107,12 @@ namespace :rails_route_extractor do
     end
 
     desc "List all available routes in CSV format"
-    task :csv, [:pattern, :controller, :method] => :environment do |_t, args|
+    task :csv => :environment do |_t, _args|
       require 'rails_route_extractor'
       require 'csv'
 
       begin
-        routes = get_filtered_routes(args)
+        routes = RailsRouteExtractor.list_routes
         
         CSV.generate do |csv|
           csv << ["Controller", "Action", "Path", "Method", "Name"]
@@ -139,11 +133,11 @@ namespace :rails_route_extractor do
     end
 
     desc "List all available routes in HTML format"
-    task :html, [:pattern, :controller, :method, :detailed] => :environment do |_t, args|
+    task :html, [:detailed] => :environment do |_t, args|
       require 'rails_route_extractor'
 
       begin
-        routes = get_filtered_routes(args)
+        routes = RailsRouteExtractor.list_routes
         
         puts generate_html_routes(routes, args[:detailed] == 'true')
       rescue => e
@@ -151,32 +145,6 @@ namespace :rails_route_extractor do
         exit 1
       end
     end
-  end
-
-  # Helper method to filter routes based on arguments
-  def get_filtered_routes(args)
-    routes = RailsRouteExtractor.list_routes
-    # Filter by pattern if provided
-    if args[:pattern]
-      routes = routes.select { |route| 
-        route[:controller]&.include?(args[:pattern]) || 
-        route[:action]&.include?(args[:pattern]) || 
-        route[:path]&.include?(args[:pattern]) ||
-        route[:name]&.include?(args[:pattern])
-      }
-    end
-    
-    # Filter by controller if provided
-    if args[:controller]
-      routes = routes.select { |route| route[:controller] == args[:controller] }
-    end
-    
-    # Filter by HTTP method if provided
-    if args[:method]
-      routes = routes.select { |route| route[:method] == args[:method].upcase }
-    end
-    
-    routes
   end
 
   # Helper method to generate HTML output
@@ -433,15 +401,15 @@ namespace :rails_route_extractor do
   end
 
   desc "Catalog routes by controller and action in text format (default). See other formats under catalog:by_param namespace."
-  task :catalog, [:param_paths, :pattern, :controller, :method] => :environment do |_t, args|
-    Rake::Task['rails_route_extractor:catalog:by_param:text'].invoke(args[:param_paths], args[:pattern], args[:controller], args[:method])
+  task :catalog, [:param_paths] => :environment do |_t, args|
+    Rake::Task['rails_route_extractor:catalog:by_param:text'].invoke(args[:param_paths])
     Rake::Task['rails_route_extractor:catalog:by_param:text'].reenable
   end
 
   namespace :catalog do
     desc "Show help for the catalog tasks"
     task :help do
-      puts "Usage: rake rails_route_extractor:catalog:by_param:<format>[param_paths,pattern,controller,method]"
+      puts "Usage: rake rails_route_extractor:catalog:by_param:<format>[param_paths]"
       puts ""
       puts "Creates a hierarchical catalog of routes organized by one or more parameters."
       puts ""
@@ -451,19 +419,13 @@ namespace :rails_route_extractor do
       puts "  param_paths:  A comma-separated string of parameters to create the hierarchy."
       puts "                Example: 'controller,action' or '[controller,action]'"
       puts "                Defaults to 'controller,action' if not provided."
-      puts "  pattern:      (Optional) Filter routes by a pattern in controller, action, path, or name."
-      puts "  controller:   (Optional) Filter routes by a specific controller name."
-      puts "  method:       (Optional) Filter routes by an HTTP method (e.g., GET, POST)."
       puts ""
       puts "Examples:"
       puts "  # Catalog by controller, then action, in text format"
-      puts "  rake rails_route_extractor:catalog:by_param:text\\[controller,action\\]"
+      puts "  rake rails_route_extractor:catalog:by_param:text\[controller,action\]"
       puts ""
-      puts "  # Catalog by HTTP method, then controller, for GET requests, in JSON format"
-      puts "  rake rails_route_extractor:catalog:by_param:json\\['method,controller',,GET\\]"
-      puts ""
-      puts "  # Catalog by controller for routes matching 'admin', in HTML format"
-      puts "  rake rails_route_extractor:catalog:by_param:html\\[controller,admin\\]"
+      puts "  # Catalog by HTTP method, then controller, in JSON format"
+      puts "  rake rails_route_extractor:catalog:by_param:json\['method,controller'\]"
     end
     
     namespace :by_param do
@@ -473,13 +435,12 @@ namespace :rails_route_extractor do
       end
 
       desc "Catalog routes by parameter hierarchy in text format"
-      task :text, [:param_paths, :pattern, :controller, :method] => :environment do |_t, args|
+      task :text, [:param_paths] => :environment do |_t, args|
         require 'rails_route_extractor'
 
         begin
           param_paths = parse_param_paths(args[:param_paths])
           routes = RailsRouteExtractor.list_routes
-          #routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
           puts "Route Catalog by #{param_paths.join(' > ')}"
@@ -495,14 +456,13 @@ namespace :rails_route_extractor do
       end
 
       desc "Catalog routes by parameter hierarchy in JSON format"
-      task :json, [:param_paths, :pattern, :controller, :method, :detailed] => :environment do |_t, args|
+      task :json, [:param_paths, :detailed] => :environment do |_t, args|
         require 'rails_route_extractor'
         require 'json'
 
         begin
           param_paths = parse_param_paths(args[:param_paths])
           routes = RailsRouteExtractor.list_routes
-          #routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
           output = {
@@ -523,13 +483,12 @@ namespace :rails_route_extractor do
       end
 
       desc "Catalog routes by parameter hierarchy in HTML format"
-      task :html, [:param_paths, :pattern, :controller, :method] => :environment do |_t, args|
+      task :html, [:param_paths] => :environment do |_t, args|
         require 'rails_route_extractor'
 
         begin
           param_paths = parse_param_paths(args[:param_paths])
           routes = RailsRouteExtractor.list_routes
-          #routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
           html_output = generate_html_catalog(catalog, param_paths, routes.length)
@@ -541,14 +500,13 @@ namespace :rails_route_extractor do
       end
 
       desc "Catalog routes by parameter hierarchy in YAML format"
-      task :yaml, [:param_paths, :pattern, :controller, :method] => :environment do |_t, args|
+      task :yaml, [:param_paths] => :environment do |_t, args|
         require 'rails_route_extractor'
         require 'yaml'
 
         begin
           param_paths = parse_param_paths(args[:param_paths])
           routes = RailsRouteExtractor.list_routes
-          #routes = get_filtered_routes(args)
           catalog = build_param_catalog(routes, param_paths)
           
           output = {
