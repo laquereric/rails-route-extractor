@@ -1,7 +1,7 @@
 {
   "RSpec": {
     "coverage": {
-      "/Users/laqueel/LaquerEric/GitHub/rails-route-extractor/lib/rails_route_extractor/cli.rb": {
+      "/mnt/c/Users/EricsSurface/OneDrive/Desktop/ManusStuff/rails-route-extractor/lib/rails_route_extractor/cli.rb": {
         "lines": [
           null,
           null,
@@ -214,6 +214,6 @@
         ]
       }
     },
-    "timestamp": 1751488442
+    "timestamp": 1751558947
   }
 }

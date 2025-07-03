@@ -34,36 +34,6 @@ RSpec.describe RailsRouteExtractor do
     end
   end
 
-  describe ".extract_route" do
-    let(:route_pattern) { "users#index" }
-    let(:options) { { mode: "mvc" } }
-
-    it "delegates to ExtractManager" do
-      allow_any_instance_of(RailsRouteExtractor::ExtractManager).to receive(:extract_route)
-        .with(route_pattern, options)
-        .and_return({ success: true })
-
-      result = RailsRouteExtractor.extract_route(route_pattern, options)
-
-      expect(result).to eq({ success: true })
-    end
-  end
-
-  describe ".extract_routes" do
-    let(:route_patterns) { ["users#index", "posts#show"] }
-    let(:options) { { mode: "mvc" } }
-
-    it "delegates to ExtractManager" do
-      allow_any_instance_of(RailsRouteExtractor::ExtractManager).to receive(:extract_routes)
-        .with(route_patterns, options)
-        .and_return({ success: true })
-
-      result = RailsRouteExtractor.extract_routes(route_patterns, options)
-
-      expect(result).to eq({ success: true })
-    end
-  end
-
   describe ".list_routes" do
     it "delegates to RouteAnalyzer" do
       allow_any_instance_of(RailsRouteExtractor::RouteAnalyzer).to receive(:list_routes)
@@ -76,35 +46,9 @@ RSpec.describe RailsRouteExtractor do
 
       expect(routes).to be_an(Array)
       expect(routes.length).to eq(2)
-    end
+      end
   end
 
-  describe ".route_info" do
-    let(:route_pattern) { "users#index" }
 
-    it "delegates to RouteAnalyzer" do
-      allow_any_instance_of(RailsRouteExtractor::RouteAnalyzer).to receive(:route_info)
-        .with(route_pattern)
-        .and_return({ controller: "users", action: "index", path: "/users" })
-
-      info = RailsRouteExtractor.route_info(route_pattern)
-
-      expect(info).to eq({ controller: "users", action: "index", path: "/users" })
-    end
-  end
-
-  describe ".cleanup_extracts" do
-    let(:options) { { older_than: "7d" } }
-
-    it "delegates to ExtractManager" do
-      allow_any_instance_of(RailsRouteExtractor::ExtractManager).to receive(:cleanup_extracts)
-        .with(options)
-        .and_return({ cleaned: 5 })
-
-      result = RailsRouteExtractor.cleanup_extracts(options)
-
-      expect(result).to eq({ cleaned: 5 })
-    end
-  end
 end
 

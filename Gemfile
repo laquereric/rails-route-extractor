@@ -9,7 +9,7 @@ gem "rake", "~> 13.0"
 gem "rspec", "~> 3.0"
 gem "rubocop", "~> 1.21"
 
-gem 'ruby_codeql_db', path: '~/laquereric/GitHub/ruby-codeql-db'  # github_laquereric: '~/laquereric/GitHub/ruby-codeql-db'
+gem 'ruby_codeql_db', path: '../ruby-codeql-db'  # github_laquereric: '~/laquereric/GitHub/ruby-codeql-db'
 gem "yard", "~> 0.9"
 gem "simplecov", "~> 0.21"
 gem "cucumber", "~> 7.0"

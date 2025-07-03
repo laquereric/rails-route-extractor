@@ -37,7 +37,6 @@ module RailsRouteExtractor
           next
         end
       end
-      binding.pry
       routes.sort_by { |r| [r[:controller], r[:action]] }
     end
 

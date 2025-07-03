@@ -1,5 +1,5 @@
 PATH
-  remote: ../../../laquereric/GitHub/ruby-codeql-db
+  remote: ../ruby-codeql-db
   specs:
     ruby_codeql_db (0.1.0)
       json (~> 2.0)

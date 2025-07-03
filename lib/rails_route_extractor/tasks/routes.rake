@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 puts "routes.rake"
-namespace :rails_route_extractor do
+namespace :rails_route_analyzer do
   desc "Show help for rails_route_extractor tasks"
   task :help do
     puts "Usage: rake rails_route_extractor:<command>"
