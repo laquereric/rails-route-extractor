@@ -13,11 +13,20 @@ module RailsRouteExtractor
       ensure_rails_environment!
       
       routes = []
+      # Iterate through all routes defined in the Rails application
+      # Skip internal routes and redirects
+      # Use a begin-rescue block to handle any errors gracefully
+      # and continue processing other routes
+      # Extract relevant information from each route
+      # Sort routes by controller and action for easier navigation
+      # Return an array of route hashes with detailed information
+      # about each route, including controller, action, method, and path
+      # Also include helper names and any additional metadata if available 
       Rails.application.routes.routes.each do |route|
         begin
           # Skip internal routes and redirects
-          next if route.app.is_a?(ActionDispatch::Routing::Redirect)
           next if route.name && route.name.start_with?('rails_')
+          
           next if route.path.spec.to_s.start_with?('/rails/')
           
           route_info = extract_route_info(route)
@@ -28,7 +37,7 @@ module RailsRouteExtractor
           next
         end
       end
-      
+      binding.pry
       routes.sort_by { |r| [r[:controller], r[:action]] }
     end
 

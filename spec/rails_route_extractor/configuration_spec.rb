@@ -262,17 +262,23 @@ RSpec.describe RailsRouteExtractor::Configuration do
 
     it "returns 'mc' for models and controllers" do
       config.mc_mode
-      expect(config.current_mode).to eq('cm')
+      expect(config.include_models).to eq(true)
+      expect(config.include_views).to eq(false)
+      expect(config.include_controllers).to eq(true)
     end
 
     it "returns 'vc' for views and controllers" do
       config.vc_mode
-      expect(config.current_mode).to eq('cv')
+      expect(config.include_models).to eq(false)
+      expect(config.include_views).to eq(true)
+      expect(config.include_controllers).to eq(true)
     end
 
     it "returns 'mvc' for all components" do
       config.mvc_mode
-      expect(config.current_mode).to eq('cmv')
+      expect(config.include_models).to eq(true)
+      expect(config.include_views).to eq(true)
+      expect(config.include_controllers).to eq(true)
     end
 
     it "returns 'custom' for custom combinations" do

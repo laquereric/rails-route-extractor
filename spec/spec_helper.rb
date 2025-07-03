@@ -2,6 +2,7 @@
 
 require "rails_route_extractor"
 require "simplecov"
+require "pry"
 
 SimpleCov.start do
   add_filter "/spec/"

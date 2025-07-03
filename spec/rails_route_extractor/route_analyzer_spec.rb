@@ -16,14 +16,18 @@ RSpec.describe RailsRouteExtractor::RouteAnalyzer do
         verb: "GET",
         path: double(spec: "/users"),
         defaults: { controller: "users", action: "index" },
-        name: "users"
+        name: "users",,
+        constraints:{}, 
+        requirements:{}
       ),
       double("route2",
         app: double('app2', is_a?: false),
         verb: "POST",
         path: double(spec: "/users"),
         defaults: { controller: "users", action: "create" },
-        name: "users"
+        name: "users",
+        constraints:{},
+        requirements:{}
       )
     ])
     
@@ -40,7 +44,6 @@ RSpec.describe RailsRouteExtractor::RouteAnalyzer do
   describe "#list_routes" do
     it "returns an array of route hashes" do
       routes = analyzer.list_routes
-      
       expect(routes).to be_an(Array)
       expect(routes.length).to eq(2)
       
